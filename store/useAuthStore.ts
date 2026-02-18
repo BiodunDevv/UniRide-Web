@@ -379,6 +379,7 @@ export const useAuthStore = create<AuthState>()(
             throw new Error(data.message || "Failed to enable biometric");
           }
 
+          toast.success("Biometric authentication enabled");
           const currentUser = get().user;
           if (currentUser) {
             set({
@@ -394,6 +395,7 @@ export const useAuthStore = create<AuthState>()(
             error instanceof Error
               ? error.message
               : "An error occurred while enabling biometric";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             isLoading: false,
@@ -418,6 +420,17 @@ export const useAuthStore = create<AuthState>()(
               Authorization: `Bearer ${token}`,
             },
           });
+
+          if (response.status === 401 || response.status === 403) {
+            set({
+              user: null,
+              token: null,
+              device_id: null,
+              isLoading: false,
+              error: null,
+            });
+            return null;
+          }
 
           const data = await response.json();
 

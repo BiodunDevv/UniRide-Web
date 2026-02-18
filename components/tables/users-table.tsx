@@ -38,10 +38,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserDetailDrawer } from "@/components/modals/user-detail-drawer";
+import Link from "next/link";
 import {
   Users,
   Flag,
   Trash2,
+  ExternalLink,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -125,12 +127,21 @@ export function UsersTable({ users, onFlag, onDelete }: UsersTableProps) {
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/users/${row.original._id}`}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                  View Details
+                </Link>
+              </DropdownMenuItem>
               {onFlag && (
-                <DropdownMenuItem onClick={() => onFlag(row.original)}>
-                  <Flag className="h-3.5 w-3.5 mr-1.5" />
-                  {row.original.is_flagged ? "Unflag" : "Flag"}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onFlag(row.original)}>
+                    <Flag className="h-3.5 w-3.5 mr-1.5" />
+                    {row.original.is_flagged ? "Unflag" : "Flag"}
+                  </DropdownMenuItem>
+                </>
               )}
               {onDelete && (
                 <>

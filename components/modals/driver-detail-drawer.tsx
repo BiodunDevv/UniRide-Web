@@ -15,7 +15,8 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Car, Mail, Phone, Star } from "lucide-react";
+import Link from "next/link";
+import { Car, Mail, Phone, Star, ExternalLink } from "lucide-react";
 import type { Driver } from "@/store/useAdminStore";
 
 interface DriverDetailDrawerProps {
@@ -46,7 +47,7 @@ export function DriverDetailDrawer({
             View driver details and statistics
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+        <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto px-4 py-2 text-sm">
           <Separator />
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -125,19 +126,30 @@ export function DriverDetailDrawer({
             </div>
           </div>
         </div>
-        <DrawerFooter className="shrink-0 border-t">
+        <DrawerFooter>
           {onDelete && (
             <Button
               size="sm"
               variant="destructive"
-              className="text-xs"
+              className="text-xs w-full"
               onClick={onDelete}
             >
               Delete Driver
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs w-full"
+            asChild
+          >
+            <Link href={`/dashboard/drivers/${driver._id}`}>
+              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+              View Full Details
+            </Link>
+          </Button>
           <DrawerClose asChild>
-            <Button variant="outline" size="sm" className="text-xs">
+            <Button variant="ghost" size="sm" className="text-xs w-full">
               Close
             </Button>
           </DrawerClose>

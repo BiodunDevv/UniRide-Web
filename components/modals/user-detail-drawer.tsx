@@ -14,8 +14,9 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import Link from "next/link";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Users, Mail, Calendar, Flag } from "lucide-react";
+import { Users, Mail, Calendar, Flag, ExternalLink } from "lucide-react";
 import type { User } from "@/store/useAdminStore";
 
 interface UserDetailDrawerProps {
@@ -48,7 +49,7 @@ export function UserDetailDrawer({
             View user account details
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+        <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto px-4 py-2 text-sm">
           <Separator />
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -97,30 +98,45 @@ export function UserDetailDrawer({
             </div>
           </div>
         </div>
-        <DrawerFooter className="shrink-0 border-t">
-          {onFlag && (
-            <Button
-              size="sm"
-              variant="secondary"
-              className="text-xs"
-              onClick={onFlag}
-            >
-              <Flag className="h-3.5 w-3.5 mr-1.5" />
-              {user.is_flagged ? "Unflag User" : "Flag User"}
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              size="sm"
-              variant="destructive"
-              className="text-xs"
-              onClick={onDelete}
-            >
-              Delete User
-            </Button>
+        <DrawerFooter>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs w-full"
+            asChild
+          >
+            <Link href={`/dashboard/users/${user._id}`}>
+              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+              View Full Details
+            </Link>
+          </Button>
+          {(onFlag || onDelete) && (
+            <div className="flex gap-2 w-full">
+              {onFlag && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="text-xs flex-1"
+                  onClick={onFlag}
+                >
+                  <Flag className="h-3.5 w-3.5 mr-1.5" />
+                  {user.is_flagged ? "Unflag" : "Flag"}
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="text-xs flex-1"
+                  onClick={onDelete}
+                >
+                  Delete
+                </Button>
+              )}
+            </div>
           )}
           <DrawerClose asChild>
-            <Button variant="outline" size="sm" className="text-xs">
+            <Button variant="ghost" size="sm" className="text-xs w-full">
               Close
             </Button>
           </DrawerClose>

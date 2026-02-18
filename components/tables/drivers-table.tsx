@@ -38,10 +38,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DriverDetailDrawer } from "@/components/modals/driver-detail-drawer";
+import Link from "next/link";
 import {
   Car,
   Trash2,
   Star,
+  Flag,
+  ExternalLink,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -52,10 +55,11 @@ import type { Driver } from "@/store/useAdminStore";
 
 interface DriversTableProps {
   drivers: Driver[];
+  onFlag?: (driver: Driver) => void;
   onDelete?: (driver: Driver) => void;
 }
 
-export function DriversTable({ drivers, onDelete }: DriversTableProps) {
+export function DriversTable({ drivers, onFlag, onDelete }: DriversTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const columns = React.useMemo<ColumnDef<Driver>[]>(
@@ -136,7 +140,22 @@ export function DriversTable({ drivers, onDelete }: DriversTableProps) {
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/drivers/${row.original._id}`}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                  View Details
+                </Link>
+              </DropdownMenuItem>
+              {onFlag && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onFlag(row.original)}>
+                    <Flag className="h-3.5 w-3.5 mr-1.5" />
+                    {row.original.user_id?.is_flagged ? "Unflag" : "Flag"}
+                  </DropdownMenuItem>
+                </>
+              )}
               {onDelete && (
                 <>
                   <DropdownMenuSeparator />
@@ -154,7 +173,7 @@ export function DriversTable({ drivers, onDelete }: DriversTableProps) {
         ),
       },
     ],
-    [onDelete],
+    [onFlag, onDelete],
   );
 
   const table = useReactTable({

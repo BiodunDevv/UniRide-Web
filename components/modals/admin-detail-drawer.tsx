@@ -48,7 +48,7 @@ export function AdminDetailDrawer({
             View admin account details
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+        <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto px-4 py-2 text-sm">
           <Separator />
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -90,24 +90,28 @@ export function AdminDetailDrawer({
             </div>
           </div>
         </div>
-        <DrawerFooter className="shrink-0 border-t">
-          {onEdit && (
-            <Button size="sm" className="text-xs" onClick={onEdit}>
-              Edit Role
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              size="sm"
-              variant="destructive"
-              className="text-xs"
-              onClick={onDelete}
-            >
-              Delete Admin
-            </Button>
+        <DrawerFooter>
+          {(onEdit || onDelete) && (
+            <div className="flex gap-2 w-full">
+              {onEdit && (
+                <Button size="sm" className="text-xs flex-1" onClick={onEdit}>
+                  Edit Role
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="text-xs flex-1"
+                  onClick={onDelete}
+                >
+                  Delete Admin
+                </Button>
+              )}
+            </div>
           )}
           <DrawerClose asChild>
-            <Button variant="outline" size="sm" className="text-xs">
+            <Button variant="ghost" size="sm" className="text-xs w-full">
               Close
             </Button>
           </DrawerClose>

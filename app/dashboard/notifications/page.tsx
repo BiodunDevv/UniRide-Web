@@ -1,168 +1,323 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Bell,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  BellOff,
   CheckCheck,
-  AlertCircle,
-  UserCheck,
-  MessageSquare,
-  DollarSign,
-  Car,
-  Clock,
+  RefreshCw,
+  MoreHorizontal,
+  Trash2,
+  Filter,
+  Loader2,
 } from "lucide-react";
+import {
+  useNotificationStore,
+  type NotificationQueryParams,
+} from "@/store/useNotificationStore";
+import {
+  NotificationSkeleton,
+  EmptyState,
+  NotificationRow,
+  FILTER_OPTIONS,
+} from "@/components/notifications";
 
-const mockNotifications = [
-  {
-    id: "1",
-    title: "New driver application",
-    message: "Fatima Bello submitted a driver application",
-    type: "application",
-    read: false,
-    createdAt: "2 minutes ago",
-  },
-  {
-    id: "2",
-    title: "Payment dispute",
-    message: "Ayo Adeniyi reported a payment issue for booking BK001",
-    type: "payment",
-    read: false,
-    createdAt: "15 minutes ago",
-  },
-  {
-    id: "3",
-    title: "Support ticket opened",
-    message: "New support ticket #T003 - App crash on booking",
-    type: "support",
-    read: false,
-    createdAt: "30 minutes ago",
-  },
-  {
-    id: "4",
-    title: "Driver suspended",
-    message: "Ngozi Eze has been automatically suspended due to low rating",
-    type: "driver",
-    read: true,
-    createdAt: "1 hour ago",
-  },
-  {
-    id: "5",
-    title: "New user registration",
-    message: "50 new users registered in the last 24 hours",
-    type: "user",
-    read: true,
-    createdAt: "2 hours ago",
-  },
-  {
-    id: "6",
-    title: "Revenue milestone",
-    message: "Monthly revenue exceeded ₦2M target",
-    type: "payment",
-    read: true,
-    createdAt: "5 hours ago",
-  },
-  {
-    id: "7",
-    title: "Driver application approved",
-    message: "Grace Okafor's application was approved",
-    type: "application",
-    read: true,
-    createdAt: "1 day ago",
-  },
-  {
-    id: "8",
-    title: "System update",
-    message: "Platform update v2.3.1 deployed successfully",
-    type: "system",
-    read: true,
-    createdAt: "2 days ago",
-  },
-];
-
-const typeIcons: Record<string, typeof Bell> = {
-  application: UserCheck,
-  payment: DollarSign,
-  support: MessageSquare,
-  driver: Car,
-  user: Bell,
-  system: AlertCircle,
-};
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NotificationsPage() {
-  const unreadCount = mockNotifications.filter((n) => !n.read).length;
+  const {
+    notifications,
+    unreadCount,
+    pagination,
+    isLoading,
+    isMutating,
+    error,
+    getNotifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+    clearReadNotifications,
+    clearError,
+  } = useNotificationStore();
+
+  const [readFilter, setReadFilter] = useState<boolean | undefined>(undefined);
+  const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
+  // Track which IDs are currently being deleted (for per-row spinner)
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  // Prevent overlapping "delete all" runs
+  const isDeletingAllRef = useRef(false);
+
+  const fetchNotifications = useCallback(
+    (overrides?: NotificationQueryParams) => {
+      getNotifications({
+        is_read: readFilter,
+        type: typeFilter,
+        limit: 50,
+        ...overrides,
+      });
+    },
+    [getNotifications, readFilter, typeFilter],
+  );
+
+  // Initial load
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Dismiss store-level errors (toasts already shown)
+  useEffect(() => {
+    if (error) clearError();
+  }, [error, clearError]);
+
+  // ── Delete one by one with a short stagger ────────────────────────────────
+  const handleDeleteAll = useCallback(async () => {
+    if (isDeletingAllRef.current || notifications.length === 0) return;
+    isDeletingAllRef.current = true;
+
+    const ids = notifications.map((n) => n._id);
+    let deleted = 0;
+    let failed = 0;
+
+    for (const id of ids) {
+      setDeletingIds((prev) => new Set(prev).add(id));
+
+      try {
+        // silent=true — suppress per-item toasts during bulk, show one summary at the end
+        await deleteNotification(id, true);
+        deleted++;
+      } catch {
+        failed++;
+      }
+
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    isDeletingAllRef.current = false;
+    setDeletingIds(new Set());
+
+    if (deleted > 0 && failed === 0) {
+      toast.success(
+        `All ${deleted} notification${deleted !== 1 ? "s" : ""} deleted`,
+      );
+    } else if (deleted > 0 && failed > 0) {
+      toast.success(`${deleted} deleted`, {
+        description: `${failed} could not be removed`,
+      });
+    } else if (failed > 0) {
+      toast.error("Could not delete notifications. Please try again.");
+    }
+  }, [notifications, deleteNotification]);
+
+  const handleDeleteSingle = useCallback(
+    async (id: string) => {
+      setDeletingIds((prev) => new Set(prev).add(id));
+      try {
+        await deleteNotification(id);
+      } finally {
+        setDeletingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }
+    },
+    [deleteNotification],
+  );
+
+  const hasReadNotifications = notifications.some((n) => n.is_read);
+  const isFiltered = readFilter !== undefined || typeFilter !== undefined;
+  const isDeletingAll = isDeletingAllRef.current || deletingIds.size > 0;
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold">Notifications</h2>
           <p className="text-xs text-muted-foreground">
-            {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
+            {unreadCount > 0 ? (
+              <>
+                <span className="font-medium text-foreground">
+                  {unreadCount}
+                </span>{" "}
+                unread notification{unreadCount !== 1 ? "s" : ""}
+              </>
+            ) : (
+              "No unread notifications"
+            )}
+            {pagination && (
+              <span className="ml-1.5 text-muted-foreground/60">
+                · {pagination.total} total
+              </span>
+            )}
           </p>
         </div>
-        <Button variant="outline" size="sm">
-          <CheckCheck className="h-4 w-4 mr-1.5" />
-          <span className="text-xs">Mark all read</span>
-        </Button>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Refresh */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => fetchNotifications()}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
+            />
+          </Button>
+
+          {/* Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5"
+              >
+                <Filter className="h-3.5 w-3.5" />
+                {readFilter === undefined
+                  ? "All"
+                  : readFilter
+                    ? "Read"
+                    : "Unread"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              {FILTER_OPTIONS.map((opt) => (
+                <DropdownMenuItem
+                  key={opt.label}
+                  className="text-xs"
+                  onClick={() => {
+                    setReadFilter(opt.value);
+                    getNotifications({
+                      is_read: opt.value,
+                      type: typeFilter,
+                      limit: 50,
+                    });
+                  }}
+                >
+                  {opt.label}
+                  {readFilter === opt.value && (
+                    <span className="ml-auto text-primary">✓</span>
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Bulk actions */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5"
+                disabled={isDeletingAll && notifications.length === 0}
+              >
+                <MoreHorizontal className="h-3.5 w-3.5" />
+                Actions
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {unreadCount > 0 && (
+                <DropdownMenuItem
+                  className="text-xs gap-2"
+                  disabled={isMutating}
+                  onClick={markAllNotificationsRead}
+                >
+                  <CheckCheck className="h-3.5 w-3.5" />
+                  Mark all as read
+                </DropdownMenuItem>
+              )}
+              {hasReadNotifications && (
+                <DropdownMenuItem
+                  className="text-xs gap-2"
+                  disabled={isMutating}
+                  onClick={clearReadNotifications}
+                >
+                  <BellOff className="h-3.5 w-3.5" />
+                  Clear read
+                </DropdownMenuItem>
+              )}
+              {(unreadCount > 0 || hasReadNotifications) && (
+                <DropdownMenuSeparator />
+              )}
+              <DropdownMenuItem
+                className="text-xs gap-2 text-destructive focus:text-destructive"
+                disabled={isDeletingAll || notifications.length === 0}
+                onClick={handleDeleteAll}
+              >
+                {isDeletingAll ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+                {isDeletingAll
+                  ? `Deleting… (${deletingIds.size} left)`
+                  : "Delete all"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
+      {/* List */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">All Notifications</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-1">
-            {mockNotifications.map((notification) => {
-              const Icon = typeIcons[notification.type] || Bell;
-              return (
-                <div
-                  key={notification.id}
-                  className={`flex items-start gap-3 p-3 rounded-md transition-colors hover:bg-muted/50 ${
-                    !notification.read ? "bg-primary/5" : ""
-                  }`}
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">
+            {isFiltered ? (
+              <>
+                Filtered results
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 ml-2 text-xs text-muted-foreground"
+                  onClick={() => {
+                    setReadFilter(undefined);
+                    setTypeFilter(undefined);
+                    getNotifications({ limit: 50 });
+                  }}
                 >
-                  <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                      !notification.read
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p
-                        className={`text-xs ${!notification.read ? "font-semibold" : "font-medium"}`}
-                      >
-                        {notification.title}
-                      </p>
-                      {!notification.read && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {notification.message}
-                    </p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[10px] text-muted-foreground">
-                        {notification.createdAt}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  Clear filter
+                </Button>
+              </>
+            ) : (
+              "All Notifications"
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 pb-2">
+          {isLoading ? (
+            <div className="px-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <NotificationSkeleton key={i} />
+              ))}
+            </div>
+          ) : notifications.length === 0 ? (
+            <EmptyState filtered={isFiltered} />
+          ) : (
+            <div className="space-y-0.5 px-2">
+              {notifications.map((n) => (
+                <NotificationRow
+                  key={n._id}
+                  notification={n}
+                  isDeleting={deletingIds.has(n._id)}
+                  onMarkRead={markNotificationRead}
+                  onDelete={handleDeleteSingle}
+                />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

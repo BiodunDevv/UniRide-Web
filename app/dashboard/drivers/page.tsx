@@ -8,15 +8,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { DriversTable } from "@/components/tables/drivers-table";
 import { DeleteConfirmModal } from "@/components/modals/delete-confirm-modal";
-import { Car, Search, Star, Loader2 } from "lucide-react";
+import {
+  StatsCard,
+  PageHeader,
+  SearchInput,
+  LoadingState,
+} from "@/components/shared";
+import { Car, Star, Flag } from "lucide-react";
 import { useAdminStore } from "@/store/useAdminStore";
 import type { Driver } from "@/store/useAdminStore";
 
 export default function DriversPage() {
-  const { drivers, isLoading, getAllDrivers, deleteDriver } = useAdminStore();
+  const { drivers, isLoading, getAllDrivers, deleteDriver, flagUser } =
+    useAdminStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -53,6 +59,17 @@ export default function DriversPage() {
     return rated.reduce((acc, d) => acc + d.rating, 0) / rated.length;
   }, [drivers]);
 
+  const handleFlagDriver = async (driver: Driver) => {
+    if (!driver.user_id?._id) return;
+    setActionLoading(true);
+    try {
+      await flagUser(driver.user_id._id, !driver.user_id.is_flagged);
+      await getAllDrivers();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleDeleteDriver = async (forceDelete: boolean) => {
     if (!selectedDriver) return;
     setActionLoading(true);
@@ -68,66 +85,28 @@ export default function DriversPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <div>
-        <h2 className="text-lg font-semibold">Drivers</h2>
-        <p className="text-xs text-muted-foreground">
-          Manage registered drivers
-        </p>
-      </div>
+      <PageHeader title="Drivers" description="Manage registered drivers" />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Car className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-lg font-bold">{drivers.length}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  Total Drivers
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Car className="h-4 w-4 text-green-500" />
-              <div>
-                <p className="text-lg font-bold">
-                  {drivers.filter((d) => d.status === "active").length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Active</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-yellow-500" />
-              <div>
-                <p className="text-lg font-bold">{avgRating.toFixed(1)}</p>
-                <p className="text-[10px] text-muted-foreground">Avg Rating</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Car className="h-4 w-4 text-accent" />
-              <div>
-                <p className="text-lg font-bold">
-                  {drivers.reduce((acc, d) => acc + (d.total_ratings || 0), 0)}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  Total Ratings
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard icon={Car} value={drivers.length} label="Total Drivers" />
+        <StatsCard
+          icon={Car}
+          iconColor="text-green-500"
+          value={drivers.filter((d) => d.status === "active").length}
+          label="Active"
+        />
+        <StatsCard
+          icon={Star}
+          iconColor="text-yellow-500"
+          value={avgRating.toFixed(1)}
+          label="Avg Rating"
+        />
+        <StatsCard
+          icon={Flag}
+          iconColor="text-destructive"
+          value={drivers.filter((d) => d.user_id?.is_flagged).length}
+          label="Flagged"
+        />
       </div>
 
       <Card>
@@ -140,25 +119,20 @@ export default function DriversPage() {
                 {filteredDrivers.length !== 1 ? "s" : ""}
               </CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Search drivers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-8 text-xs"
-              />
-            </div>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search drivers..."
+            />
           </div>
         </CardHeader>
         <CardContent>
           {isLoading && drivers.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <LoadingState />
           ) : (
             <DriversTable
               drivers={filteredDrivers}
+              onFlag={handleFlagDriver}
               onDelete={(driver) => {
                 setSelectedDriver(driver);
                 setShowDeleteModal(true);

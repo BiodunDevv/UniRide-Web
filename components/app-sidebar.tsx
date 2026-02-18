@@ -103,6 +103,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuthStore();
   const pathname = usePathname();
 
+  const isSuperAdmin = user?.role?.toLowerCase() === "super_admin";
+
+  const filteredNavMain = React.useMemo(
+    () =>
+      isSuperAdmin
+        ? navMain
+        : navMain.filter((item) => item.url !== "/dashboard/admins"),
+    [isSuperAdmin],
+  );
+
   const userData = {
     name: user?.name || "Admin User",
     email: user?.email || "admin@uniride.ng",
@@ -116,7 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              className="data-[slot=sidebar-menu-button]:p-1.5! hover:bg-transparent hover:text-inherit"
             >
               <Link href="/dashboard">
                 <Logo className="w-7 h-auto" variant="dark" />
@@ -127,8 +137,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} currentPath={pathname} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        <NavMain items={filteredNavMain} currentPath={pathname} />
+        <NavSecondary
+          items={navSecondary}
+          currentPath={pathname}
+          className="mt-auto"
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

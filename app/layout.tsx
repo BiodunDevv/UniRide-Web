@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -11,9 +11,9 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "UniRide - Secure Campus Ride-Hailing Platform",
+  title: "UniRide Admin — Campus Ride-Hailing Management",
   description:
-    "Your trusted campus transportation partner. Safe, reliable, and affordable rides for university students.",
+    "UniRide Admin Dashboard — Monitor rides, manage drivers, oversee bookings, and ensure safe, reliable campus transportation across university communities.",
 };
 
 export default function RootLayout({
@@ -25,6 +25,7 @@ export default function RootLayout({
     <html lang="en" className={spaceGrotesk.variable} suppressHydrationWarning>
       <body className={`${spaceGrotesk.className} antialiased`}>
         {children}
+        <Toaster position="top-right" closeButton />
       </body>
     </html>
   );

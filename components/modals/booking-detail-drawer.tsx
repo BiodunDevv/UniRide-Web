@@ -72,7 +72,7 @@ export function BookingDetailDrawer({ booking }: BookingDetailDrawerProps) {
             Booking {booking.id}
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+        <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto px-4 py-2 text-sm">
           <Separator />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -137,9 +137,9 @@ export function BookingDetailDrawer({ booking }: BookingDetailDrawerProps) {
             </div>
           </div>
         </div>
-        <DrawerFooter className="shrink-0 border-t">
+        <DrawerFooter>
           <DrawerClose asChild>
-            <Button variant="outline" size="sm" className="text-xs">
+            <Button variant="ghost" size="sm" className="text-xs w-full">
               Close
             </Button>
           </DrawerClose>

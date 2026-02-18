@@ -11,7 +11,9 @@ import {
   ResponsiveModalHeader,
   ResponsiveModalTitle,
 } from "@/components/ui/responsive-modal";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, Info } from "lucide-react";
+
+const DEFAULT_PASSWORD = "123456789";
 
 interface CreateAdminModalProps {
   open: boolean;
@@ -32,29 +34,25 @@ export function CreateAdminModal({
 }: CreateAdminModalProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const passwordsMatch = password === confirmPassword;
-  const isValid =
-    name && email && password && confirmPassword && passwordsMatch;
+  const isValid = name.trim() && email.trim();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
 
-    await onSubmit({ name, email, password });
+    await onSubmit({
+      name: name.trim(),
+      email: email.trim(),
+      password: DEFAULT_PASSWORD,
+    });
     setName("");
     setEmail("");
-    setPassword("");
-    setConfirmPassword("");
   };
 
   const handleClose = () => {
     setName("");
     setEmail("");
-    setPassword("");
-    setConfirmPassword("");
     onOpenChange(false);
   };
 
@@ -74,7 +72,7 @@ export function CreateAdminModal({
           onSubmit={handleSubmit}
           className="flex flex-col flex-1 overflow-hidden"
         >
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="grid gap-3 px-4 py-2">
               <div className="grid gap-1.5">
                 <Label htmlFor="create-name" className="text-xs">
@@ -103,48 +101,40 @@ export function CreateAdminModal({
                   required
                 />
               </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="create-password" className="text-xs">
-                  Password
-                </Label>
-                <Input
-                  id="create-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="h-8 text-xs"
-                  required
-                  minLength={6}
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="create-confirm" className="text-xs">
-                  Confirm Password
-                </Label>
-                <Input
-                  id="create-confirm"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="h-8 text-xs"
-                  required
-                  minLength={6}
-                />
-                {password && confirmPassword && !passwordsMatch && (
-                  <p className="text-[10px] text-destructive">
-                    Passwords do not match
+
+              {/* Default password notice */}
+              <div className="flex items-start gap-2 rounded-md bg-muted/60 px-3 py-2.5">
+                <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="text-[11px] font-medium text-foreground">
+                    Default password:{" "}
+                    <span className="font-mono tracking-wider">
+                      {DEFAULT_PASSWORD}
+                    </span>
                   </p>
-                )}
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    The admin will be prompted to change their password on first
+                    login.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 px-4 pb-4 pt-2 shrink-0">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 px-4 pb-4 pt-2 shrink-0 border-t sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs w-full sm:w-auto"
+              disabled={isLoading}
+              onClick={handleClose}
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               size="sm"
-              className="text-xs w-full"
+              className="text-xs w-full sm:w-auto"
               disabled={!isValid || isLoading}
             >
               {isLoading ? (
@@ -155,16 +145,6 @@ export function CreateAdminModal({
               ) : (
                 "Create Admin"
               )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs w-full"
-              disabled={isLoading}
-              onClick={handleClose}
-            >
-              Cancel
             </Button>
           </div>
         </form>

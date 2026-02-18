@@ -77,11 +77,7 @@ export default function Header() {
                 {isLoggedIn ? "Dashboard" : "Admin Portal"}
               </Link>
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              asChild
-            >
+            <Button variant="secondary" size="sm" asChild>
               <Link href="/driver-apply">Become a Driver</Link>
             </Button>
 
@@ -117,7 +113,7 @@ export default function Header() {
 
         {/* Sidebar Panel */}
         <div
-          className={`absolute right-0 top-0 bottom-0 w-[260px] bg-primary shadow-2xl transform transition-all duration-500 ease-in-out ${
+          className={`absolute right-0 top-0 bottom-0 w-65 bg-primary shadow-2xl transform transition-all duration-500 ease-in-out ${
             isSidebarOpen
               ? "translate-x-0 opacity-100"
               : "translate-x-full opacity-0"
@@ -127,7 +123,9 @@ export default function Header() {
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center gap-2">
               <Logo className="w-8 h-auto" variant="light" />
-              <span className="text-sm font-bold text-primary-foreground">UniRide</span>
+              <span className="text-sm font-bold text-primary-foreground">
+                UniRide
+              </span>
             </div>
             <button
               onClick={() => setIsSidebarOpen(false)}

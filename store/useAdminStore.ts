@@ -137,7 +137,9 @@ interface AdminState {
   getAllDrivers: () => Promise<void>;
   getDriverById: (id: string) => Promise<Driver>;
   getAllUsers: () => Promise<void>;
+  getUserById: (id: string) => Promise<User>;
   getAllAdmins: () => Promise<void>;
+  getAdminById: (id: string) => Promise<Admin>;
   updateAdmin: (id: string, role: "admin" | "super_admin") => Promise<void>;
   deleteAdmin: (id: string, force?: boolean) => Promise<void>;
   deleteUser: (id: string, force?: boolean) => Promise<void>;
@@ -494,6 +496,39 @@ export const useAdminStore = create<AdminState>((set) => ({
     }
   },
 
+  getUserById: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(`${API_URL}/api/admin/users/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch user details");
+      }
+
+      set({ isLoading: false, error: null });
+      return data.data;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      set({
+        error: errorMessage,
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
   getAllAdmins: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -519,6 +554,40 @@ export const useAdminStore = create<AdminState>((set) => ({
         isLoading: false,
         error: null,
       });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+      set({
+        error: errorMessage,
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  getAdminById: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(`${API_URL}/api/admin/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch admin details");
+      }
+
+      set({ isLoading: false, error: null });
+      return data.data;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An error occurred";
@@ -551,6 +620,7 @@ export const useAdminStore = create<AdminState>((set) => ({
         throw new Error(data.message || "Failed to update admin");
       }
 
+      toast.success("Admin role updated successfully");
       set({ isLoading: false, error: null });
     } catch (error) {
       const errorMessage =
@@ -667,10 +737,14 @@ export const useAdminStore = create<AdminState>((set) => ({
         throw new Error(data.message || "Failed to delete driver");
       }
 
+      toast.success(
+        force ? "Driver deleted permanently" : "Driver flagged successfully",
+      );
       set({ isLoading: false, error: null });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
       set({
         error: errorMessage,
         isLoading: false,
@@ -736,6 +810,7 @@ export const useAdminStore = create<AdminState>((set) => ({
         throw new Error(data.message || "Failed to update fare policy");
       }
 
+      toast.success("Fare policy updated successfully");
       set({
         farePolicy: data.data,
         isLoading: false,
@@ -744,6 +819,7 @@ export const useAdminStore = create<AdminState>((set) => ({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
       set({
         error: errorMessage,
         isLoading: false,

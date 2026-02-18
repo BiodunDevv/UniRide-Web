@@ -49,7 +49,7 @@ export default function HeroSection() {
   return (
     <section
       id="home"
-      className="relative min-h-[85vh] flex items-center bg-primary overflow-hidden"
+      className="relative min-h-[90vh] flex items-center bg-primary overflow-hidden"
     >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
@@ -61,8 +61,8 @@ export default function HeroSection() {
         />
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-24 lg:py-0">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 pb-10 lg:py-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-20 items-center">
           {/* Left Content */}
           <div className="space-y-8 order-2 lg:order-1 z-10">
             <div className="space-y-6">
@@ -108,10 +108,12 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Right Content - Image Slideshow */}
           <div className="relative order-1 lg:order-2 z-10">
-            <div className="relative aspect-square lg:aspect-4/3 overflow-hidden shadow-2xl group">
-              {/* Images */}
+            <div
+              className="relative overflow-hidden shadow-2xl group"
+              style={{ aspectRatio: "4/3" }}
+            >
+              {/* Slides */}
               {campusImages.map((image, index) => (
                 <div
                   key={index}
@@ -122,58 +124,68 @@ export default function HeroSection() {
                   <Image
                     src={image.url}
                     alt={image.alt}
-                    width={800}
-                    height={600}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
                     priority={index === 0}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/30 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-br from-primary/50 via-primary/10 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-primary/50 via-transparent to-transparent" />
                 </div>
               ))}
 
-              {/* Navigation Arrows */}
-              <Button
-                variant="ghost"
-                size="icon-lg"
+              {/* Prev / Next arrows — visible on hover */}
+              <button
                 onClick={prevSlide}
-                className="absolute left-3 top-1/2 -translate-y-1/2 bg-card/90 hover:bg-card text-foreground shadow-lg hover:scale-105 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all duration-200 opacity-0 group-hover:opacity-100"
                 aria-label="Previous slide"
               >
-                <ChevronLeft className="w-6 h-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-lg"
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
                 onClick={nextSlide}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-card/90 hover:bg-card text-foreground shadow-lg hover:scale-105 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all duration-200 opacity-0 group-hover:opacity-100"
                 aria-label="Next slide"
               >
-                <ChevronRight className="w-6 h-6" />
-              </Button>
+                <ChevronRight className="w-4 h-4" />
+              </button>
 
-              {/* Slide Indicators */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
+              {/* Indicators */}
+              <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
                 {campusImages.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentSlide(index)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
+                    className={`h-0.75 transition-all duration-300 ${
                       index === currentSlide
-                        ? "bg-white w-8"
-                        : "bg-white/50 hover:bg-white/75 w-2"
+                        ? "bg-white w-6"
+                        : "bg-white/35 hover:bg-white/55 w-3"
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />
                 ))}
               </div>
 
-              {/* Info Badge */}
-              <div className="absolute top-4 right-4 bg-card/95 backdrop-blur-sm p-2.5 shadow-lg">
-                <div className="text-base font-bold text-foreground">2000+</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">
+              {/* Corner stat tag */}
+              <div className="absolute top-0 left-0 bg-primary/70 backdrop-blur-sm px-3 py-2 border-r border-b border-primary-foreground/10">
+                <div className="text-xs sm:text-sm font-bold text-primary-foreground">
+                  2,000+
+                </div>
+                <div className="text-[8px] sm:text-[9px] text-primary-foreground/45 uppercase tracking-wider mt-0.5">
                   Campus Rides
                 </div>
               </div>
+            </div>
+
+            {/* Caption strip */}
+            <div className="mt-2 flex items-center justify-between px-0.5">
+              <span className="text-[9px] sm:text-[10px] text-primary-foreground/30 uppercase tracking-widest">
+                Verified · Safe · Reliable
+              </span>
+              <span className="text-[9px] sm:text-[10px] text-primary-foreground/30 tabular-nums">
+                {String(currentSlide + 1).padStart(2, "0")} /{" "}
+                {String(campusImages.length).padStart(2, "0")}
+              </span>
             </div>
           </div>
         </div>

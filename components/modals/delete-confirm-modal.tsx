@@ -54,7 +54,7 @@ export function DeleteConfirmModal({
             action cannot be easily undone.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="px-4 py-2">
             {showForceOption && (
               <div className="flex items-center space-x-2">
@@ -72,11 +72,20 @@ export function DeleteConfirmModal({
             )}
           </div>
         </div>
-        <div className="flex flex-col gap-2 px-4 pb-4 pt-2 shrink-0 border-t">
+        <div className="flex flex-col-reverse sm:flex-row gap-2 px-4 pb-4 pt-2 shrink-0 border-t sm:justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs w-full sm:w-auto"
+            disabled={isLoading}
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
           <Button
             variant="destructive"
             size="sm"
-            className="text-xs w-full"
+            className="text-xs w-full sm:w-auto"
             onClick={handleConfirm}
             disabled={isLoading}
           >
@@ -88,15 +97,6 @@ export function DeleteConfirmModal({
             ) : (
               "Delete"
             )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs w-full"
-            disabled={isLoading}
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
           </Button>
         </div>
       </ResponsiveModalContent>

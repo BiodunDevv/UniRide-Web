@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -9,16 +10,42 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { AdminsTable } from "@/components/tables/admins-table";
 import { CreateAdminModal } from "@/components/modals/create-admin-modal";
 import { UpdateAdminRoleModal } from "@/components/modals/update-admin-role-modal";
 import { DeleteConfirmModal } from "@/components/modals/delete-confirm-modal";
-import { Shield, Search, Plus, Users, Loader2 } from "lucide-react";
+import {
+  StatsCard,
+  PageHeader,
+  SearchInput,
+  LoadingState,
+} from "@/components/shared";
+import { Shield, Plus, Users, Flag } from "lucide-react";
 import { useAdminStore } from "@/store/useAdminStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import type { Admin } from "@/store/useAdminStore";
 
 export default function AdminsPage() {
+  const router = useRouter();
+  const { user, getMe } = useAuthStore();
+
+  // Guard: only super_admin can access this page
+  useEffect(() => {
+    const checkAccess = async () => {
+      // Re-fetch latest user data to ensure role is current
+      await getMe();
+      const currentUser = useAuthStore.getState().user;
+      if (!currentUser || currentUser.role.toLowerCase() !== "super_admin") {
+        router.replace("/dashboard");
+      }
+    };
+    checkAccess();
+  }, [getMe, router]);
+
+  // Don't render anything until we confirm the user is super_admin
+  if (!user || user.role.toLowerCase() !== "super_admin") {
+    return <LoadingState />;
+  }
   const {
     admins,
     isLoading,
@@ -26,6 +53,7 @@ export default function AdminsPage() {
     createAdmin,
     updateAdmin,
     deleteAdmin,
+    flagUser,
   } = useAdminStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,6 +76,16 @@ export default function AdminsPage() {
       ),
     [admins, searchQuery],
   );
+
+  const handleFlagAdmin = async (admin: Admin) => {
+    setActionLoading(true);
+    try {
+      await flagUser(admin._id, !admin.is_flagged);
+      await getAllAdmins();
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleCreateAdmin = async (data: {
     name: string;
@@ -92,74 +130,37 @@ export default function AdminsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Admin Management</h2>
-          <p className="text-xs text-muted-foreground">
-            Manage admin accounts and permissions
-          </p>
-        </div>
-        <Button size="sm" onClick={() => setShowCreateModal(true)}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          <span className="text-xs">Add Admin</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Admin Management"
+        description="Manage admin accounts and permissions"
+        actions={
+          <Button size="sm" onClick={() => setShowCreateModal(true)}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            <span className="text-xs">Add Admin</span>
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-lg font-bold">{admins.length}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  Total Admins
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-green-500" />
-              <div>
-                <p className="text-lg font-bold">
-                  {admins.filter((a) => !a.is_flagged).length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Active</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-accent" />
-              <div>
-                <p className="text-lg font-bold">
-                  {admins.filter((a) => a.role === "super_admin").length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  Super Admins
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-lg font-bold">
-                  {admins.filter((a) => a.is_flagged).length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Flagged</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard icon={Shield} value={admins.length} label="Total Admins" />
+        <StatsCard
+          icon={Users}
+          iconColor="text-green-500"
+          value={admins.filter((a) => !a.is_flagged).length}
+          label="Active"
+        />
+        <StatsCard
+          icon={Shield}
+          iconColor="text-accent"
+          value={admins.filter((a) => a.role === "super_admin").length}
+          label="Super Admins"
+        />
+        <StatsCard
+          icon={Shield}
+          iconColor="text-muted-foreground"
+          value={admins.filter((a) => a.is_flagged).length}
+          label="Flagged"
+        />
       </div>
 
       <Card>
@@ -172,25 +173,20 @@ export default function AdminsPage() {
                 {filteredAdmins.length !== 1 ? "s" : ""} total
               </CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Search admins..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-8 text-xs"
-              />
-            </div>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search admins..."
+            />
           </div>
         </CardHeader>
         <CardContent>
           {isLoading && admins.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <LoadingState />
           ) : (
             <AdminsTable
               admins={filteredAdmins}
+              onFlag={handleFlagAdmin}
               onEdit={(admin) => {
                 setSelectedAdmin(admin);
                 setShowEditModal(true);

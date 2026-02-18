@@ -8,16 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { BookingsTable } from "@/components/tables/bookings-table";
-import { FileText, Search, MapPin, Clock, DollarSign } from "lucide-react";
+import {
+  StatsCard,
+  PageHeader,
+  SearchInput,
+  StatusFilter,
+} from "@/components/shared";
+import { FileText, MapPin, Clock, DollarSign } from "lucide-react";
 
 const mockBookings = [
   {
@@ -99,64 +97,31 @@ export default function BookingsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <div>
-        <h2 className="text-lg font-semibold">Bookings</h2>
-        <p className="text-xs text-muted-foreground">
-          View and manage ride bookings
-        </p>
-      </div>
+      <PageHeader
+        title="Bookings"
+        description="View and manage ride bookings"
+      />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-lg font-bold">{mockBookings.length}</p>
-                <p className="text-[10px] text-muted-foreground">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
-              <div>
-                <p className="text-lg font-bold">
-                  {mockBookings.filter((b) => b.status === "in_progress").length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Active</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-500" />
-              <div>
-                <p className="text-lg font-bold">
-                  {mockBookings.filter((b) => b.status === "completed").length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Completed</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-destructive" />
-              <div>
-                <p className="text-lg font-bold">
-                  {mockBookings.filter((b) => b.status === "cancelled").length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Cancelled</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard icon={FileText} value={mockBookings.length} label="Total" />
+        <StatsCard
+          icon={Clock}
+          iconColor="text-blue-500"
+          value={mockBookings.filter((b) => b.status === "in_progress").length}
+          label="Active"
+        />
+        <StatsCard
+          icon={DollarSign}
+          iconColor="text-green-500"
+          value={mockBookings.filter((b) => b.status === "completed").length}
+          label="Completed"
+        />
+        <StatsCard
+          icon={MapPin}
+          iconColor="text-destructive"
+          value={mockBookings.filter((b) => b.status === "cancelled").length}
+          label="Cancelled"
+        />
       </div>
 
       <Card>
@@ -170,37 +135,23 @@ export default function BookingsPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative w-48">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-8 text-xs"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32 h-8 text-xs">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-xs">
-                    All
-                  </SelectItem>
-                  <SelectItem value="pending" className="text-xs">
-                    Pending
-                  </SelectItem>
-                  <SelectItem value="in_progress" className="text-xs">
-                    In Progress
-                  </SelectItem>
-                  <SelectItem value="completed" className="text-xs">
-                    Completed
-                  </SelectItem>
-                  <SelectItem value="cancelled" className="text-xs">
-                    Cancelled
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search..."
+                className="w-48"
+              />
+              <StatusFilter
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { label: "All", value: "all" },
+                  { label: "Pending", value: "pending" },
+                  { label: "In Progress", value: "in_progress" },
+                  { label: "Completed", value: "completed" },
+                  { label: "Cancelled", value: "cancelled" },
+                ]}
+              />
             </div>
           </div>
         </CardHeader>

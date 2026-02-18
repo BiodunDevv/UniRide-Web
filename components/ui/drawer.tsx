@@ -62,7 +62,7 @@ function DrawerContent({
         {...props}
       >
         <div className="bg-muted mt-4 h-1 w-[100px] rounded-none mx-auto hidden shrink-0 group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
   );

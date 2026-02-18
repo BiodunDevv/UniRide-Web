@@ -7,6 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 export function NavMain({
@@ -20,6 +21,12 @@ export function NavMain({
   }[];
   currentPath?: string;
 }) {
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleNavClick = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+
   return (
     <SidebarGroup>
       <SidebarGroupContent>
@@ -35,8 +42,13 @@ export function NavMain({
                   tooltip={item.title}
                   isActive={isActive}
                   asChild
+                  className={
+                    isActive
+                      ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                      : "hover:bg-primary hover:text-primary-foreground"
+                  }
                 >
-                  <Link href={item.url}>
+                  <Link href={item.url} onClick={handleNavClick}>
                     {item.icon}
                     <span>{item.title}</span>
                   </Link>

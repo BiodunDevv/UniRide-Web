@@ -56,7 +56,7 @@ export function UpdateAdminRoleModal({
             Change role for <strong>{adminName}</strong>
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="grid gap-3 px-4 py-2">
             <div className="grid gap-1.5">
               <Label htmlFor="update-role" className="text-xs">
@@ -81,10 +81,19 @@ export function UpdateAdminRoleModal({
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-2 px-4 pb-4 pt-2 shrink-0 border-t">
+        <div className="flex flex-col-reverse sm:flex-row gap-2 px-4 pb-4 pt-2 shrink-0 border-t sm:justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs w-full sm:w-auto"
+            disabled={isLoading}
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
           <Button
             size="sm"
-            className="text-xs w-full"
+            className="text-xs w-full sm:w-auto"
             onClick={handleSubmit}
             disabled={isLoading}
           >
@@ -96,15 +105,6 @@ export function UpdateAdminRoleModal({
             ) : (
               "Update Role"
             )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs w-full"
-            disabled={isLoading}
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
           </Button>
         </div>
       </ResponsiveModalContent>

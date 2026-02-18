@@ -42,6 +42,7 @@ import {
   Shield,
   Edit2,
   Trash2,
+  Flag,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -52,11 +53,17 @@ import type { Admin } from "@/store/useAdminStore";
 
 interface AdminsTableProps {
   admins: Admin[];
+  onFlag?: (admin: Admin) => void;
   onEdit?: (admin: Admin) => void;
   onDelete?: (admin: Admin) => void;
 }
 
-export function AdminsTable({ admins, onEdit, onDelete }: AdminsTableProps) {
+export function AdminsTable({
+  admins,
+  onFlag,
+  onEdit,
+  onDelete,
+}: AdminsTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const columns = React.useMemo<ColumnDef<Admin>[]>(
@@ -134,12 +141,21 @@ export function AdminsTable({ admins, onEdit, onDelete }: AdminsTableProps) {
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
-              {onEdit && (
-                <DropdownMenuItem onClick={() => onEdit(row.original)}>
-                  <Edit2 className="h-3.5 w-3.5 mr-1.5" />
-                  Edit Role
+            <DropdownMenuContent align="end" className="w-40">
+              {onFlag && (
+                <DropdownMenuItem onClick={() => onFlag(row.original)}>
+                  <Flag className="h-3.5 w-3.5 mr-1.5" />
+                  {row.original.is_flagged ? "Unflag" : "Flag"}
                 </DropdownMenuItem>
+              )}
+              {onEdit && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onEdit(row.original)}>
+                    <Edit2 className="h-3.5 w-3.5 mr-1.5" />
+                    Edit Role
+                  </DropdownMenuItem>
+                </>
               )}
               {onDelete && (
                 <>
@@ -158,7 +174,7 @@ export function AdminsTable({ admins, onEdit, onDelete }: AdminsTableProps) {
         ),
       },
     ],
-    [onEdit, onDelete],
+    [onFlag, onEdit, onDelete],
   );
 
   const table = useReactTable({

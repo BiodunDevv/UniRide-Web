@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { toast } from "sonner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -54,7 +55,7 @@ interface ChatState {
   getAllTickets: (
     status?: string,
     priority?: string,
-    category?: string
+    category?: string,
   ) => Promise<void>;
   getAvailableTickets: (priority?: string, category?: string) => Promise<void>;
   getTicketById: (id: string) => Promise<void>;
@@ -123,6 +124,7 @@ export const useChatStore = create<ChatState>()(
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to fetch tickets";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             isLoading: false,
@@ -162,7 +164,7 @@ export const useChatStore = create<ChatState>()(
 
           if (!response.ok) {
             throw new Error(
-              data.message || "Failed to fetch available tickets"
+              data.message || "Failed to fetch available tickets",
             );
           }
 
@@ -176,6 +178,7 @@ export const useChatStore = create<ChatState>()(
             error instanceof Error
               ? error.message
               : "Failed to fetch available tickets";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             isLoading: false,
@@ -216,6 +219,7 @@ export const useChatStore = create<ChatState>()(
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to fetch ticket";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             isLoading: false,
@@ -242,7 +246,7 @@ export const useChatStore = create<ChatState>()(
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${authData.state.token}`,
               },
-            }
+            },
           );
 
           const data = await response.json();
@@ -254,19 +258,21 @@ export const useChatStore = create<ChatState>()(
           // Update the ticket in the lists
           set((state) => ({
             tickets: state.tickets.map((ticket) =>
-              ticket._id === id ? data.data : ticket
+              ticket._id === id ? data.data : ticket,
             ),
             availableTickets: state.availableTickets.filter(
-              (ticket) => ticket._id !== id
+              (ticket) => ticket._id !== id,
             ),
             currentTicket:
               state.currentTicket?._id === id ? data.data : state.currentTicket,
             processingTicketId: null,
             error: null,
           }));
+          toast.success("Ticket accepted successfully");
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to accept ticket";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             processingTicketId: null,
@@ -293,7 +299,7 @@ export const useChatStore = create<ChatState>()(
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${authData.state.token}`,
               },
-            }
+            },
           );
 
           const data = await response.json();
@@ -305,7 +311,7 @@ export const useChatStore = create<ChatState>()(
           // Update the ticket in the lists
           set((state) => ({
             tickets: state.tickets.map((ticket) =>
-              ticket._id === id ? data.data : ticket
+              ticket._id === id ? data.data : ticket,
             ),
             availableTickets: [...state.availableTickets, data.data],
             currentTicket:
@@ -313,9 +319,11 @@ export const useChatStore = create<ChatState>()(
             processingTicketId: null,
             error: null,
           }));
+          toast.success("Ticket declined");
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to decline ticket";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             processingTicketId: null,
@@ -343,7 +351,7 @@ export const useChatStore = create<ChatState>()(
                 Authorization: `Bearer ${authData.state.token}`,
               },
               body: JSON.stringify({ message }),
-            }
+            },
           );
 
           const data = await response.json();
@@ -355,7 +363,7 @@ export const useChatStore = create<ChatState>()(
           // Update the ticket in the lists
           set((state) => ({
             tickets: state.tickets.map((ticket) =>
-              ticket._id === id ? data.data : ticket
+              ticket._id === id ? data.data : ticket,
             ),
             currentTicket:
               state.currentTicket?._id === id ? data.data : state.currentTicket,
@@ -365,6 +373,7 @@ export const useChatStore = create<ChatState>()(
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to add message";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             processingTicketId: null,
@@ -391,7 +400,7 @@ export const useChatStore = create<ChatState>()(
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${authData.state.token}`,
               },
-            }
+            },
           );
 
           const data = await response.json();
@@ -403,16 +412,18 @@ export const useChatStore = create<ChatState>()(
           // Update the ticket in the lists
           set((state) => ({
             tickets: state.tickets.map((ticket) =>
-              ticket._id === id ? data.data : ticket
+              ticket._id === id ? data.data : ticket,
             ),
             currentTicket:
               state.currentTicket?._id === id ? data.data : state.currentTicket,
             processingTicketId: null,
             error: null,
           }));
+          toast.success("Ticket resolved successfully");
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to resolve ticket";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             processingTicketId: null,
@@ -440,7 +451,7 @@ export const useChatStore = create<ChatState>()(
                 Authorization: `Bearer ${authData.state.token}`,
               },
               body: JSON.stringify({ priority }),
-            }
+            },
           );
 
           const data = await response.json();
@@ -452,21 +463,23 @@ export const useChatStore = create<ChatState>()(
           // Update the ticket in the lists
           set((state) => ({
             tickets: state.tickets.map((ticket) =>
-              ticket._id === id ? data.data : ticket
+              ticket._id === id ? data.data : ticket,
             ),
             availableTickets: state.availableTickets.map((ticket) =>
-              ticket._id === id ? data.data : ticket
+              ticket._id === id ? data.data : ticket,
             ),
             currentTicket:
               state.currentTicket?._id === id ? data.data : state.currentTicket,
             processingTicketId: null,
             error: null,
           }));
+          toast.success("Priority updated successfully");
         } catch (error) {
           const errorMessage =
             error instanceof Error
               ? error.message
               : "Failed to update priority";
+          toast.error(errorMessage);
           set({
             error: errorMessage,
             processingTicketId: null,
@@ -480,6 +493,6 @@ export const useChatStore = create<ChatState>()(
       partialize: (state) => ({
         currentTicket: state.currentTicket,
       }),
-    }
-  )
+    },
+  ),
 );

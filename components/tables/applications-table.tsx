@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ApplicationDetailDrawer } from "@/components/modals/application-modals";
+import Link from "next/link";
 import {
   UserCheck,
   CheckCircle,
@@ -47,6 +48,7 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  ExternalLink,
 } from "lucide-react";
 import type { DriverApplication } from "@/store/useAdminStore";
 
@@ -155,9 +157,18 @@ export function ApplicationsTable({
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/dashboard/driver-applications/${row.original._id}`}
+                >
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                  View Details
+                </Link>
+              </DropdownMenuItem>
               {row.original.status === "pending" && (
                 <>
+                  <DropdownMenuSeparator />
                   {onApprove && (
                     <DropdownMenuItem onClick={() => onApprove(row.original)}>
                       <CheckCircle className="h-3.5 w-3.5 mr-1.5" />

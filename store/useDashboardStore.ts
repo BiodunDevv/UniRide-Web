@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { useAuthStore } from "./useAuthStore";
+import { toast } from "sonner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -127,7 +128,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const result = await response.json();
@@ -142,8 +143,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         error: null,
       });
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
       set({
-        error: error instanceof Error ? error.message : "An error occurred",
+        error: errorMessage,
         isLoading: false,
       });
     }

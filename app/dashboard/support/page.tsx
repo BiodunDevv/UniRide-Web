@@ -8,26 +8,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { TicketsTable } from "@/components/tables/tickets-table";
 import {
   ReplyTicketModal,
   UpdatePriorityModal,
 } from "@/components/modals/ticket-modals";
 import {
-  MessageSquare,
-  Search,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-} from "lucide-react";
+  StatsCard,
+  PageHeader,
+  SearchInput,
+  StatusFilter,
+} from "@/components/shared";
+import { MessageSquare, Clock, CheckCircle, AlertCircle } from "lucide-react";
 
 type Ticket = {
   id: string;
@@ -136,64 +128,35 @@ export default function SupportPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <div>
-        <h2 className="text-lg font-semibold">Support</h2>
-        <p className="text-xs text-muted-foreground">
-          Manage support tickets and user inquiries
-        </p>
-      </div>
+      <PageHeader
+        title="Support"
+        description="Manage support tickets and user inquiries"
+      />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <div>
-                <p className="text-lg font-bold">
-                  {mockTickets.filter((t) => t.status === "open").length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Open</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
-              <div>
-                <p className="text-lg font-bold">
-                  {mockTickets.filter((t) => t.status === "in_progress").length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">In Progress</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <div>
-                <p className="text-lg font-bold">
-                  {mockTickets.filter((t) => t.status === "resolved").length}
-                </p>
-                <p className="text-[10px] text-muted-foreground">Resolved</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-lg font-bold">{mockTickets.length}</p>
-                <p className="text-[10px] text-muted-foreground">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          icon={AlertCircle}
+          iconColor="text-yellow-500"
+          value={mockTickets.filter((t) => t.status === "open").length}
+          label="Open"
+        />
+        <StatsCard
+          icon={Clock}
+          iconColor="text-blue-500"
+          value={mockTickets.filter((t) => t.status === "in_progress").length}
+          label="In Progress"
+        />
+        <StatsCard
+          icon={CheckCircle}
+          iconColor="text-green-500"
+          value={mockTickets.filter((t) => t.status === "resolved").length}
+          label="Resolved"
+        />
+        <StatsCard
+          icon={MessageSquare}
+          value={mockTickets.length}
+          label="Total"
+        />
       </div>
 
       <Card>
@@ -207,34 +170,22 @@ export default function SupportPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative w-48">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-8 text-xs"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32 h-8 text-xs">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-xs">
-                    All
-                  </SelectItem>
-                  <SelectItem value="open" className="text-xs">
-                    Open
-                  </SelectItem>
-                  <SelectItem value="in_progress" className="text-xs">
-                    In Progress
-                  </SelectItem>
-                  <SelectItem value="resolved" className="text-xs">
-                    Resolved
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search..."
+                className="w-48"
+              />
+              <StatusFilter
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { label: "All", value: "all" },
+                  { label: "Open", value: "open" },
+                  { label: "In Progress", value: "in_progress" },
+                  { label: "Resolved", value: "resolved" },
+                ]}
+              />
             </div>
           </div>
         </CardHeader>
