@@ -1,235 +1,358 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useChatStore } from "@/store/useChatStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { PageHeader, StatsCard } from "@/components/shared";
+import { TicketList } from "@/components/support/ticket-list";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { TicketsTable } from "@/components/tables/tickets-table";
+  TicketDetail,
+  TicketDetailEmpty,
+} from "@/components/support/ticket-detail";
+import { UpdatePriorityDialog } from "@/components/support/update-priority-dialog";
+import { STATUS_OPTIONS } from "@/components/support/ticket-helpers";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ReplyTicketModal,
-  UpdatePriorityModal,
-} from "@/components/modals/ticket-modals";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
-  StatsCard,
-  PageHeader,
-  SearchInput,
-  StatusFilter,
-} from "@/components/shared";
-import { MessageSquare, Clock, CheckCircle, AlertCircle } from "lucide-react";
+  X,
+  MessageSquare,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 
-type Ticket = {
-  id: string;
-  subject: string;
-  user: string;
-  type: string;
-  priority: string;
-  status: string;
-  createdAt: string;
-};
+type TabType = "available" | "my-tickets" | "all";
 
-const mockTickets: Ticket[] = [
-  {
-    id: "T001",
-    subject: "Payment not received",
-    user: "Ayo Adeniyi",
-    type: "payment",
-    priority: "high",
-    status: "open",
-    createdAt: "2024-12-03 10:30",
-  },
-  {
-    id: "T002",
-    subject: "Driver was rude",
-    user: "Blessing Okoro",
-    type: "complaint",
-    priority: "medium",
-    status: "in_progress",
-    createdAt: "2024-12-03 09:15",
-  },
-  {
-    id: "T003",
-    subject: "App crash on booking",
-    user: "Chukwuma Ibe",
-    type: "technical",
-    priority: "high",
-    status: "open",
-    createdAt: "2024-12-03 08:00",
-  },
-  {
-    id: "T004",
-    subject: "Refund request",
-    user: "Dara Oluwole",
-    type: "payment",
-    priority: "medium",
-    status: "resolved",
-    createdAt: "2024-12-02 16:45",
-  },
-  {
-    id: "T005",
-    subject: "Wrong pickup location",
-    user: "Efe Oghenekaro",
-    type: "ride",
-    priority: "low",
-    status: "resolved",
-    createdAt: "2024-12-02 14:00",
-  },
-];
+function SupportContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user } = useAuthStore();
+  const {
+    tickets,
+    availableTickets,
+    currentTicket,
+    isLoading,
+    error,
+    processingTicketId,
+    getAllTickets,
+    getAvailableTickets,
+    getTicketById,
+    acceptTicket,
+    declineTicket,
+    addMessage,
+    resolveTicket,
+    updatePriority,
+    clearError,
+    setCurrentTicket,
+  } = useChatStore();
 
-export default function SupportPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const initialTab = useMemo<TabType>(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "all" || tab === "available" || tab === "my-tickets")
+      return tab;
+    return "available";
+  }, [searchParams]);
+
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showReplyModal, setShowReplyModal] = useState(false);
-  const [showPriorityModal, setShowPriorityModal] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [priorityModal, setPriorityModal] = useState<{
+    open: boolean;
+    ticketId: string;
+    current: string;
+  }>({ open: false, ticketId: "", current: "" });
 
-  const filteredTickets = mockTickets.filter((ticket) => {
-    const matchesSearch =
-      ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || ticket.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    setCurrentTicket(null);
+    router.push(`/dashboard/support?tab=${tab}`, { scroll: false });
+  };
 
-  const handleReply = async (message: string) => {
-    setIsLoading(true);
+  const loadTickets = useCallback(async () => {
     try {
-      // TODO: integrate with support API
-      await new Promise((r) => setTimeout(r, 1000));
-      setShowReplyModal(false);
-      setSelectedTicket(null);
-    } finally {
-      setIsLoading(false);
+      if (activeTab === "available") {
+        await getAvailableTickets(
+          priorityFilter !== "all" ? priorityFilter : undefined,
+        );
+      } else {
+        await getAllTickets(
+          statusFilter !== "all" ? statusFilter : undefined,
+          priorityFilter !== "all" ? priorityFilter : undefined,
+        );
+      }
+    } catch {
+      // errors handled in store via toast
     }
+  }, [
+    activeTab,
+    statusFilter,
+    priorityFilter,
+    getAvailableTickets,
+    getAllTickets,
+  ]);
+
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
+
+  const displayTickets = useMemo(() => {
+    if (activeTab === "available") return availableTickets;
+    if (activeTab === "my-tickets")
+      return tickets.filter((t) => t.assigned_to?._id === user?.id);
+    return tickets;
+  }, [activeTab, tickets, availableTickets, user?.id]);
+
+  const stats = useMemo(
+    () => ({
+      open: tickets.filter((t) => t.status === "open").length,
+      inProgress: tickets.filter((t) => t.status === "in_progress").length,
+      resolved: tickets.filter((t) => t.status === "resolved").length,
+      total: tickets.length,
+    }),
+    [tickets],
+  );
+
+  const handleSelect = async (id: string) => {
+    try {
+      await getTicketById(id);
+    } catch {
+      /* handled */
+    }
+  };
+
+  const handleAccept = async (id: string) => {
+    try {
+      await acceptTicket(id);
+      await loadTickets();
+    } catch {
+      /* handled */
+    }
+  };
+
+  const handleDecline = async (id: string) => {
+    try {
+      await declineTicket(id);
+      setCurrentTicket(null);
+      await loadTickets();
+    } catch {
+      /* handled */
+    }
+  };
+
+  const handleResolve = async (id: string) => {
+    try {
+      await resolveTicket(id);
+      await loadTickets();
+    } catch {
+      /* handled */
+    }
+  };
+
+  const handleSendMessage = async (id: string, message: string) => {
+    await addMessage(id, message);
+    await getTicketById(id);
   };
 
   const handleUpdatePriority = async (priority: string) => {
-    setIsLoading(true);
-    try {
-      // TODO: integrate with support API
-      await new Promise((r) => setTimeout(r, 1000));
-      setShowPriorityModal(false);
-      setSelectedTicket(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResolve = async (ticket: Ticket) => {
-    // TODO: integrate with support API
-    await new Promise((r) => setTimeout(r, 500));
+    if (!priorityModal.ticketId) return;
+    await updatePriority(priorityModal.ticketId, priority);
+    setPriorityModal({ open: false, ticketId: "", current: "" });
+    await loadTickets();
+    if (currentTicket?._id === priorityModal.ticketId)
+      await getTicketById(priorityModal.ticketId);
   };
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <PageHeader
         title="Support"
-        description="Manage support tickets and user inquiries"
+        description="Manage and respond to user support tickets"
       />
 
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatsCard
           icon={AlertCircle}
           iconColor="text-yellow-500"
-          value={mockTickets.filter((t) => t.status === "open").length}
+          value={stats.open}
           label="Open"
         />
         <StatsCard
           icon={Clock}
           iconColor="text-blue-500"
-          value={mockTickets.filter((t) => t.status === "in_progress").length}
+          value={stats.inProgress}
           label="In Progress"
         />
         <StatsCard
-          icon={CheckCircle}
+          icon={CheckCircle2}
           iconColor="text-green-500"
-          value={mockTickets.filter((t) => t.status === "resolved").length}
+          value={stats.resolved}
           label="Resolved"
         />
-        <StatsCard
-          icon={MessageSquare}
-          value={mockTickets.length}
-          label="Total"
-        />
+        <StatsCard icon={MessageSquare} value={stats.total} label="Total" />
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-sm">Support Tickets</CardTitle>
-              <CardDescription className="text-xs">
-                {filteredTickets.length} ticket
-                {filteredTickets.length !== 1 ? "s" : ""}
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search..."
-                className="w-48"
-              />
-              <StatusFilter
-                value={statusFilter}
-                onChange={setStatusFilter}
-                options={[
-                  { label: "All", value: "all" },
-                  { label: "Open", value: "open" },
-                  { label: "In Progress", value: "in_progress" },
-                  { label: "Resolved", value: "resolved" },
-                ]}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <TicketsTable
-            tickets={filteredTickets}
-            onReply={(ticket) => {
-              setSelectedTicket(ticket);
-              setShowReplyModal(true);
-            }}
-            onResolve={handleResolve}
-            onUpdatePriority={(ticket) => {
-              setSelectedTicket(ticket);
-              setShowPriorityModal(true);
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      {selectedTicket && (
-        <>
-          <ReplyTicketModal
-            open={showReplyModal}
-            onOpenChange={(open) => {
-              setShowReplyModal(open);
-              if (!open) setSelectedTicket(null);
-            }}
-            ticketSubject={selectedTicket.subject}
-            onSend={handleReply}
-            isLoading={isLoading}
-          />
-
-          <UpdatePriorityModal
-            open={showPriorityModal}
-            onOpenChange={(open) => {
-              setShowPriorityModal(open);
-              if (!open) setSelectedTicket(null);
-            }}
-            currentPriority={selectedTicket.priority}
-            onSubmit={handleUpdatePriority}
-            isLoading={isLoading}
-          />
-        </>
+      {/* Error */}
+      {error && (
+        <Alert variant="destructive" className="py-2">
+          <AlertDescription className="text-xs flex items-center justify-between">
+            {error}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 shrink-0"
+              onClick={clearError}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
+
+      {/* Main layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[600px]">
+        {/* Ticket list panel */}
+        <div className="flex flex-col border bg-card lg:col-span-1">
+          <div className="border-b">
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => handleTabChange(v as TabType)}
+            >
+              <TabsList
+                variant="line"
+                className="w-full justify-start px-3 pt-1"
+              >
+                <TabsTrigger value="available" className="text-xs flex-1">
+                  Available
+                  {availableTickets.length > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="text-[9px] px-1.5 py-0 ml-1"
+                    >
+                      {availableTickets.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="my-tickets" className="text-xs flex-1">
+                  Mine
+                </TabsTrigger>
+                <TabsTrigger value="all" className="text-xs flex-1">
+                  All
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          <div className="p-3 border-b space-y-2">
+            {activeTab !== "available" && (
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                      className="text-xs"
+                    >
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="h-7 text-xs">
+                <SelectValue placeholder="All Priorities" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">
+                  All Priorities
+                </SelectItem>
+                <SelectItem value="urgent" className="text-xs">
+                  Urgent
+                </SelectItem>
+                <SelectItem value="high" className="text-xs">
+                  High
+                </SelectItem>
+                <SelectItem value="medium" className="text-xs">
+                  Medium
+                </SelectItem>
+                <SelectItem value="low" className="text-xs">
+                  Low
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <TicketList
+              tickets={displayTickets}
+              currentTicketId={currentTicket?._id}
+              isLoading={isLoading}
+              onSelect={handleSelect}
+            />
+          </div>
+        </div>
+
+        {/* Detail panel */}
+        <div className="lg:col-span-2">
+          {currentTicket ? (
+            <TicketDetail
+              ticket={currentTicket}
+              currentUserId={user?.id}
+              processingTicketId={processingTicketId}
+              onBack={() => setCurrentTicket(null)}
+              onAccept={handleAccept}
+              onDecline={handleDecline}
+              onResolve={handleResolve}
+              onSendMessage={handleSendMessage}
+              onOpenPriorityModal={(id, current) =>
+                setPriorityModal({ open: true, ticketId: id, current })
+              }
+            />
+          ) : (
+            <TicketDetailEmpty />
+          )}
+        </div>
+      </div>
+
+      <UpdatePriorityDialog
+        open={priorityModal.open}
+        onOpenChange={(open) => setPriorityModal((prev) => ({ ...prev, open }))}
+        currentPriority={priorityModal.current}
+        isLoading={processingTicketId === priorityModal.ticketId}
+        onSubmit={handleUpdatePriority}
+      />
     </div>
   );
 }
+
+export default function SupportPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center min-h-[60vh]">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <MessageSquare className="h-4 w-4 animate-pulse" />
+            <span className="text-xs">Loading support…</span>
+          </div>
+        </div>
+      }
+    >
+      <SupportContent />
+    </Suspense>
+  );
+}
+import { TicketsTable } from "@/components/tables/tickets-table";

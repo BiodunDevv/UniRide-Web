@@ -3,3 +3,5 @@ export { PageHeader } from "./page-header";
 export { SearchInput } from "./search-input";
 export { StatusFilter } from "./status-filter";
 export { LoadingState } from "./loading-state";
+export { ComingSoon } from "./coming-soon";
+export { NotFoundContent } from "./not-found-content";

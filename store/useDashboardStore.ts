@@ -78,7 +78,7 @@ interface PeriodInfo {
   days: number;
 }
 
-interface DashboardData {
+export interface DashboardData {
   overview: Overview;
   user_growth_chart: ChartDataItem[];
   ride_status_chart: ChartDataItem[];

@@ -74,11 +74,6 @@ const navMain = [
     url: "/dashboard/broadcast",
     icon: <SendIcon />,
   },
-  {
-    title: "Support",
-    url: "/dashboard/support",
-    icon: <MessageSquareIcon />,
-  },
 ];
 
 const navSecondary = [
