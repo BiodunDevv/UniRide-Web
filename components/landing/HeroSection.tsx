@@ -49,7 +49,7 @@ export default function HeroSection() {
   return (
     <section
       id="home"
-      className="relative min-h-[90vh] flex items-center bg-primary overflow-hidden"
+      className="relative min-h-screen flex items-center bg-primary overflow-hidden"
     >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
@@ -98,9 +98,8 @@ export default function HeroSection() {
                 Download App
               </Button>
               <Button
-                size="default"
+                size="sm"
                 variant="outline"
-                className="border-primary-foreground/30  hover:bg-primary-foreground/10 text-sm"
                 asChild
               >
                 <Link href="/driver-apply">Become a Driver</Link>

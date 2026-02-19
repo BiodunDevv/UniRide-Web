@@ -123,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5! hover:bg-transparent hover:text-inherit"
             >
-              <Link href="/dashboard">
+              <Link href="/">
                 <Logo className="w-7 h-auto" variant="dark" />
                 <span className="text-base font-semibold">UniRide</span>
               </Link>

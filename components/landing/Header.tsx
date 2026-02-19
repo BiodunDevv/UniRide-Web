@@ -164,7 +164,7 @@ export default function Header() {
               asChild
             >
               <Link
-                href={isLoggedIn ? "/admin/dashboard" : "/auth/signin"}
+                href={isLoggedIn ? "/dashboard" : "/auth/signin"}
                 onClick={handleLinkClick}
               >
                 {isLoggedIn ? "Dashboard" : "Admin Portal"}
