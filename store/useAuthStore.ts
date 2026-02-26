@@ -12,6 +12,7 @@ interface User {
   role: string;
   biometric_enabled: boolean;
   first_login: boolean;
+  profile_picture?: string;
 }
 
 interface AuthState {
@@ -83,6 +84,7 @@ export const useAuthStore = create<AuthState>()(
               device_id,
               device_name: device_name || deviceInfo.name,
               device_type: device_type || deviceInfo.type,
+              platform: "web",
             }),
           });
 
@@ -98,18 +100,16 @@ export const useAuthStore = create<AuthState>()(
           }
 
           if (!response.ok) {
+            if (data.platform_restricted) {
+              set({ isLoading: false, error: null });
+              toast.error(
+                "Access denied. Only administrators can sign in to this portal.",
+              );
+              throw new Error(
+                "Access denied. Only administrators can sign in to this portal.",
+              );
+            }
             throw new Error(data.message || "Login failed");
-          }
-
-          const userRole = data.data.user.role.toLowerCase();
-          if (userRole !== "admin" && userRole !== "super_admin") {
-            set({ isLoading: false, error: null });
-            toast.error(
-              "Access denied. Only administrators can sign in to this portal.",
-            );
-            throw new Error(
-              "Access denied. Only administrators can sign in to this portal.",
-            );
           }
 
           toast.success("Login successful!");

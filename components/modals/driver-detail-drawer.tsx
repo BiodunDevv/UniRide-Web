@@ -15,17 +15,31 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ProfileAvatar } from "@/components/shared/profile-avatar";
 import Link from "next/link";
-import { Car, Mail, Phone, Star, ExternalLink } from "lucide-react";
+import {
+  Car,
+  Mail,
+  Phone,
+  Star,
+  ExternalLink,
+  Palette,
+  Info,
+  Flag,
+  FlagOff,
+  ShieldAlert,
+} from "lucide-react";
 import type { Driver } from "@/store/useAdminStore";
 
 interface DriverDetailDrawerProps {
   driver: Driver;
+  onFlag?: () => void;
   onDelete?: () => void;
 }
 
 export function DriverDetailDrawer({
   driver,
+  onFlag,
   onDelete,
 }: DriverDetailDrawerProps) {
   const isMobile = useIsMobile();
@@ -50,9 +64,11 @@ export function DriverDetailDrawer({
         <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto px-4 py-2 text-sm">
           <Separator />
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Car className="h-5 w-5 text-primary" />
-            </div>
+            <ProfileAvatar
+              src={driver.user_id?.profile_picture}
+              name={driver.user_id?.name ?? "Driver"}
+              size="md"
+            />
             <div>
               <p className="text-sm font-medium">
                 {driver.user_id?.name ?? "Unknown"}
@@ -65,13 +81,30 @@ export function DriverDetailDrawer({
                   </span>
                 </div>
                 <Badge
-                  variant={
-                    driver.status === "active" ? "outline" : "destructive"
-                  }
-                  className="text-[10px] capitalize"
+                  variant={driver.status === "active" ? "outline" : "secondary"}
+                  className={`text-[10px] ${
+                    driver.status === "active"
+                      ? "text-green-700 border-green-200 bg-green-50"
+                      : "text-muted-foreground"
+                  }`}
                 >
-                  {driver.status}
+                  <span className="flex items-center gap-1">
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        driver.status === "active"
+                          ? "bg-green-500"
+                          : "bg-gray-400"
+                      }`}
+                    />
+                    {driver.status === "active" ? "On Duty" : "Off Duty"}
+                  </span>
                 </Badge>
+                {driver.user_id?.is_flagged && (
+                  <Badge variant="destructive" className="text-[10px]">
+                    <ShieldAlert className="h-2.5 w-2.5 mr-0.5" />
+                    Flagged
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -124,18 +157,67 @@ export function DriverDetailDrawer({
               </Label>
               <span className="text-xs">{driver.available_seats}</span>
             </div>
+            {driver.vehicle_color && (
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Palette className="h-3 w-3" /> Color
+                </Label>
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-3 h-3 rounded-full border border-border"
+                    style={{
+                      backgroundColor: driver.vehicle_color.toLowerCase(),
+                    }}
+                  />
+                  <span className="text-xs">{driver.vehicle_color}</span>
+                </div>
+              </div>
+            )}
+            {driver.vehicle_description && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Info className="h-3 w-3" /> Description
+                </Label>
+                <p className="text-xs text-foreground leading-relaxed">
+                  {driver.vehicle_description}
+                </p>
+              </div>
+            )}
           </div>
         </div>
         <DrawerFooter>
-          {onDelete && (
-            <Button
-              size="sm"
-              variant="destructive"
-              className="text-xs w-full"
-              onClick={onDelete}
-            >
-              Delete Driver
-            </Button>
+          {(onFlag || onDelete) && (
+            <div className="flex gap-2 w-full">
+              {onFlag && (
+                <Button
+                  size="sm"
+                  variant={driver.user_id?.is_flagged ? "outline" : "secondary"}
+                  className={`text-xs flex-1 ${
+                    driver.user_id?.is_flagged
+                      ? "border-green-200 text-green-700 hover:bg-green-50"
+                      : "text-amber-700 hover:bg-amber-50"
+                  }`}
+                  onClick={onFlag}
+                >
+                  {driver.user_id?.is_flagged ? (
+                    <FlagOff className="h-3.5 w-3.5 mr-1.5" />
+                  ) : (
+                    <Flag className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  {driver.user_id?.is_flagged ? "Unflag" : "Flag"}
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="text-xs flex-1"
+                  onClick={onDelete}
+                >
+                  Delete
+                </Button>
+              )}
+            </div>
           )}
           <Button
             size="sm"

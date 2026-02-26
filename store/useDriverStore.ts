@@ -11,6 +11,9 @@ interface DriverApplication {
   vehicle_model: string;
   plate_number: string;
   drivers_license: string;
+  vehicle_image?: string;
+  vehicle_color?: string;
+  vehicle_description?: string;
   available_seats: number;
   status: "pending" | "approved" | "rejected";
   rejection_reason?: string;
@@ -32,6 +35,9 @@ interface DriverState {
     plate_number: string;
     drivers_license: string;
     available_seats?: number;
+    vehicle_image?: string;
+    vehicle_color?: string;
+    vehicle_description?: string;
   }) => Promise<void>;
   clearError: () => void;
 }

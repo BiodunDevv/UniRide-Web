@@ -42,6 +42,7 @@ import Link from "next/link";
 import {
   Users,
   Flag,
+  FlagOff,
   Trash2,
   ExternalLink,
   EllipsisVerticalIcon,
@@ -49,16 +50,26 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  Loader2,
+  ShieldAlert,
+  CheckCircle,
 } from "lucide-react";
 import type { User } from "@/store/useAdminStore";
+import { ProfileAvatar } from "@/components/shared/profile-avatar";
 
 interface UsersTableProps {
   users: User[];
   onFlag?: (user: User) => void;
   onDelete?: (user: User) => void;
+  flaggingId?: string | null;
 }
 
-export function UsersTable({ users, onFlag, onDelete }: UsersTableProps) {
+export function UsersTable({
+  users,
+  onFlag,
+  onDelete,
+  flaggingId,
+}: UsersTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const columns = React.useMemo<ColumnDef<User>[]>(
@@ -68,9 +79,11 @@ export function UsersTable({ users, onFlag, onDelete }: UsersTableProps) {
         header: "User",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Users className="h-3.5 w-3.5 text-primary" />
-            </div>
+            <ProfileAvatar
+              src={row.original.profile_picture}
+              name={row.original.name || "User"}
+              size="sm"
+            />
             <div>
               <UserDetailDrawer
                 user={row.original}
@@ -97,10 +110,20 @@ export function UsersTable({ users, onFlag, onDelete }: UsersTableProps) {
         header: "Status",
         cell: ({ row }) => (
           <Badge
-            variant={!row.original.is_flagged ? "outline" : "destructive"}
+            variant={row.original.is_flagged ? "destructive" : "outline"}
             className="text-muted-foreground px-1.5 capitalize"
           >
-            {row.original.is_flagged ? "Flagged" : "Active"}
+            {row.original.is_flagged ? (
+              <span className="flex items-center gap-1">
+                <ShieldAlert className="h-3 w-3" />
+                Flagged
+              </span>
+            ) : (
+              <span className="flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Active
+              </span>
+            )}
           </Badge>
         ),
       },
@@ -134,15 +157,34 @@ export function UsersTable({ users, onFlag, onDelete }: UsersTableProps) {
                   View Details
                 </Link>
               </DropdownMenuItem>
-              {onFlag && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onFlag(row.original)}>
-                    <Flag className="h-3.5 w-3.5 mr-1.5" />
-                    {row.original.is_flagged ? "Unflag" : "Flag"}
-                  </DropdownMenuItem>
-                </>
-              )}
+              {onFlag &&
+                (() => {
+                  const isFlagged = row.original.is_flagged;
+                  const isLoading = flaggingId === row.original._id;
+                  return (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => onFlag(row.original)}
+                        disabled={isLoading}
+                        className={
+                          isFlagged
+                            ? "text-green-600 focus:text-green-600"
+                            : "text-amber-600 focus:text-amber-600"
+                        }
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : isFlagged ? (
+                          <FlagOff className="h-3.5 w-3.5 mr-1.5" />
+                        ) : (
+                          <Flag className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        {isFlagged ? "Unflag User" : "Flag User"}
+                      </DropdownMenuItem>
+                    </>
+                  );
+                })()}
               {onDelete && (
                 <>
                   <DropdownMenuSeparator />

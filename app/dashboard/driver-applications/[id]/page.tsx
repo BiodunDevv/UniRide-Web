@@ -27,6 +27,9 @@ import {
   ShieldCheck,
   User,
   AlertCircle,
+  Palette,
+  ImageIcon,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -310,6 +313,41 @@ export default function ApplicationDetailPage({
                   {application.available_seats}
                 </span>
               </div>
+              {application.vehicle_color && (
+                <>
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Palette className="h-3 w-3" /> Vehicle Color
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-3 h-3 rounded-full border border-border"
+                        style={{
+                          backgroundColor:
+                            application.vehicle_color.toLowerCase(),
+                        }}
+                      />
+                      <span className="text-xs font-medium">
+                        {application.vehicle_color}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {application.vehicle_description && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Info className="h-3 w-3" /> Vehicle Description
+                    </span>
+                    <p className="text-xs text-foreground leading-relaxed pl-4.5">
+                      {application.vehicle_description}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -447,6 +485,39 @@ export default function ApplicationDetailPage({
           </CardContent>
         </Card>
       )}
+
+      {/* Vehicle Photo */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+            <ImageIcon className="h-3.5 w-3.5" />
+            Vehicle Photo
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {application.vehicle_image ? (
+            <div className="border overflow-hidden max-w-2xl">
+              <Image
+                src={application.vehicle_image}
+                alt="Vehicle Photo"
+                width={800}
+                height={500}
+                className="w-full h-auto max-h-80 object-cover"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-muted bg-muted/20 max-w-2xl">
+              <ImageIcon className="h-10 w-10 text-muted-foreground/40 mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">
+                Image Not Available
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                The applicant did not upload a vehicle photo
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Reject Modal */}
       <RejectApplicationModal

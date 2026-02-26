@@ -15,17 +15,19 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Shield, Mail } from "lucide-react";
+import { Shield, Mail, Flag, FlagOff, ShieldAlert } from "lucide-react";
 import type { Admin } from "@/store/useAdminStore";
 
 interface AdminDetailDrawerProps {
   admin: Admin;
+  onFlag?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
 export function AdminDetailDrawer({
   admin,
+  onFlag,
   onEdit,
   onDelete,
 }: AdminDetailDrawerProps) {
@@ -76,10 +78,17 @@ export function AdminDetailDrawer({
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground">Status</Label>
               <Badge
-                variant={!admin.is_flagged ? "outline" : "secondary"}
+                variant={admin.is_flagged ? "destructive" : "outline"}
                 className="text-[10px] capitalize"
               >
-                {admin.is_flagged ? "Flagged" : "Active"}
+                {admin.is_flagged ? (
+                  <span className="flex items-center gap-1">
+                    <ShieldAlert className="h-2.5 w-2.5" />
+                    Flagged
+                  </span>
+                ) : (
+                  "Active"
+                )}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
@@ -91,8 +100,27 @@ export function AdminDetailDrawer({
           </div>
         </div>
         <DrawerFooter>
-          {(onEdit || onDelete) && (
+          {(onFlag || onEdit || onDelete) && (
             <div className="flex gap-2 w-full">
+              {onFlag && (
+                <Button
+                  size="sm"
+                  variant={admin.is_flagged ? "outline" : "secondary"}
+                  className={`text-xs flex-1 ${
+                    admin.is_flagged
+                      ? "border-green-200 text-green-700 hover:bg-green-50"
+                      : "text-amber-700 hover:bg-amber-50"
+                  }`}
+                  onClick={onFlag}
+                >
+                  {admin.is_flagged ? (
+                    <FlagOff className="h-3.5 w-3.5 mr-1.5" />
+                  ) : (
+                    <Flag className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  {admin.is_flagged ? "Unflag" : "Flag"}
+                </Button>
+              )}
               {onEdit && (
                 <Button size="sm" className="text-xs flex-1" onClick={onEdit}>
                   Edit Role
@@ -105,7 +133,7 @@ export function AdminDetailDrawer({
                   className="text-xs flex-1"
                   onClick={onDelete}
                 >
-                  Delete Admin
+                  Delete
                 </Button>
               )}
             </div>

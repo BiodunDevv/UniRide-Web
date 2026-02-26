@@ -28,6 +28,7 @@ export default function DriversPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [flaggingId, setFlaggingId] = useState<string | null>(null);
 
   useEffect(() => {
     getAllDrivers();
@@ -61,12 +62,13 @@ export default function DriversPage() {
 
   const handleFlagDriver = async (driver: Driver) => {
     if (!driver.user_id?._id) return;
-    setActionLoading(true);
+    const userId = driver.user_id._id;
+    setFlaggingId(userId);
     try {
-      await flagUser(driver.user_id._id, !driver.user_id.is_flagged);
+      await flagUser(userId, !driver.user_id.is_flagged);
       await getAllDrivers();
     } finally {
-      setActionLoading(false);
+      setFlaggingId(null);
     }
   };
 
@@ -133,6 +135,7 @@ export default function DriversPage() {
             <DriversTable
               drivers={filteredDrivers}
               onFlag={handleFlagDriver}
+              flaggingId={flaggingId}
               onDelete={(driver) => {
                 setSelectedDriver(driver);
                 setShowDeleteModal(true);

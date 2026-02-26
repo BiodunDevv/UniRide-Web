@@ -28,6 +28,7 @@ export default function UsersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [flaggingId, setFlaggingId] = useState<string | null>(null);
 
   useEffect(() => {
     getAllUsers();
@@ -44,12 +45,12 @@ export default function UsersPage() {
   );
 
   const handleFlagUser = async (user: User) => {
-    setActionLoading(true);
+    setFlaggingId(user._id);
     try {
       await flagUser(user._id, !user.is_flagged);
       await getAllUsers();
     } finally {
-      setActionLoading(false);
+      setFlaggingId(null);
     }
   };
 
@@ -113,6 +114,7 @@ export default function UsersPage() {
             <UsersTable
               users={filteredUsers}
               onFlag={handleFlagUser}
+              flaggingId={flaggingId}
               onDelete={(user) => {
                 setSelectedUser(user);
                 setShowDeleteModal(true);

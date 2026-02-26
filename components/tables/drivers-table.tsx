@@ -44,22 +44,33 @@ import {
   Trash2,
   Star,
   Flag,
+  FlagOff,
   ExternalLink,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  Loader2,
+  ShieldAlert,
 } from "lucide-react";
 import type { Driver } from "@/store/useAdminStore";
+import { ProfileAvatar } from "@/components/shared/profile-avatar";
+import { getDriverStatus } from "@/lib/utils/driver-status";
 
 interface DriversTableProps {
   drivers: Driver[];
   onFlag?: (driver: Driver) => void;
   onDelete?: (driver: Driver) => void;
+  flaggingId?: string | null;
 }
 
-export function DriversTable({ drivers, onFlag, onDelete }: DriversTableProps) {
+export function DriversTable({
+  drivers,
+  onFlag,
+  onDelete,
+  flaggingId,
+}: DriversTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const columns = React.useMemo<ColumnDef<Driver>[]>(
@@ -70,12 +81,15 @@ export function DriversTable({ drivers, onFlag, onDelete }: DriversTableProps) {
         header: "Driver",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Car className="h-3.5 w-3.5 text-primary" />
-            </div>
+            <ProfileAvatar
+              src={row.original.user_id?.profile_picture}
+              name={row.original.user_id?.name ?? "Driver"}
+              size="sm"
+            />
             <div>
               <DriverDetailDrawer
                 driver={row.original}
+                onFlag={onFlag ? () => onFlag(row.original) : undefined}
                 onDelete={onDelete ? () => onDelete(row.original) : undefined}
               />
               <p className="text-[10px] text-muted-foreground">
@@ -89,7 +103,20 @@ export function DriversTable({ drivers, onFlag, onDelete }: DriversTableProps) {
       {
         accessorKey: "vehicle_model",
         header: "Vehicle",
-        cell: ({ row }) => row.original.vehicle_model,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1.5">
+            {row.original.vehicle_color && (
+              <div
+                className="w-2.5 h-2.5 rounded-full border border-border shrink-0"
+                style={{
+                  backgroundColor: row.original.vehicle_color.toLowerCase(),
+                }}
+                title={row.original.vehicle_color}
+              />
+            )}
+            <span>{row.original.vehicle_model}</span>
+          </div>
+        ),
       },
       {
         accessorKey: "plate_number",
@@ -115,16 +142,40 @@ export function DriversTable({ drivers, onFlag, onDelete }: DriversTableProps) {
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => (
-          <Badge
-            variant={
-              row.original.status === "active" ? "outline" : "destructive"
-            }
-            className="text-muted-foreground px-1.5 capitalize"
-          >
-            {row.original.status}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const isFlagged = row.original.user_id?.is_flagged;
+          const statusConfig = getDriverStatus(row.original.status);
+          return (
+            <div className="flex items-center gap-1.5">
+              <Badge
+                variant={
+                  isFlagged
+                    ? "destructive"
+                    : (statusConfig.variant as
+                        | "outline"
+                        | "secondary"
+                        | "destructive"
+                        | "default")
+                }
+                className={`px-1.5 ${isFlagged ? "" : statusConfig.className}`}
+              >
+                {isFlagged ? (
+                  <span className="flex items-center gap-1">
+                    <ShieldAlert className="h-3 w-3" />
+                    Flagged
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${statusConfig.dotColor}`}
+                    />
+                    {statusConfig.label}
+                  </span>
+                )}
+              </Badge>
+            </div>
+          );
+        },
       },
       {
         id: "actions",
@@ -147,15 +198,34 @@ export function DriversTable({ drivers, onFlag, onDelete }: DriversTableProps) {
                   View Details
                 </Link>
               </DropdownMenuItem>
-              {onFlag && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onFlag(row.original)}>
-                    <Flag className="h-3.5 w-3.5 mr-1.5" />
-                    {row.original.user_id?.is_flagged ? "Unflag" : "Flag"}
-                  </DropdownMenuItem>
-                </>
-              )}
+              {onFlag &&
+                (() => {
+                  const isFlagged = row.original.user_id?.is_flagged;
+                  const isLoading = flaggingId === row.original.user_id?._id;
+                  return (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => onFlag(row.original)}
+                        disabled={isLoading}
+                        className={
+                          isFlagged
+                            ? "text-green-600 focus:text-green-600"
+                            : "text-amber-600 focus:text-amber-600"
+                        }
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : isFlagged ? (
+                          <FlagOff className="h-3.5 w-3.5 mr-1.5" />
+                        ) : (
+                          <Flag className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        {isFlagged ? "Unflag Driver" : "Flag Driver"}
+                      </DropdownMenuItem>
+                    </>
+                  );
+                })()}
               {onDelete && (
                 <>
                   <DropdownMenuSeparator />

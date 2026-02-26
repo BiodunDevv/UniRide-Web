@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDriverStore } from "@/store/useDriverStore";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
+import { ImageDropzone } from "@/components/driver-apply/image-dropzone";
+import { VehicleColorPicker } from "@/components/driver-apply/vehicle-color-picker";
 import {
   Car,
   FileText,
@@ -23,14 +23,14 @@ import {
   ArrowLeft,
   Mail,
   User,
-  Upload,
-  X,
   Eye,
   ArrowRight,
   Edit2,
   AlertCircle,
   ShieldCheck,
   ExternalLink,
+  ImageIcon,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
@@ -121,9 +121,6 @@ export default function DriverApplyPage() {
     useDriverStore();
 
   const [step, setStep] = useState<"form" | "preview">("form");
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [imagePreview, setImagePreview] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -133,6 +130,9 @@ export default function DriverApplyPage() {
     plate_number: "",
     drivers_license: "",
     available_seats: "4",
+    vehicle_image: "",
+    vehicle_color: "",
+    vehicle_description: "",
   });
 
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -142,91 +142,6 @@ export default function DriverApplyPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Invalid file type", {
-        description: "Please upload a valid image file (PNG, JPG, WEBP).",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File too large", {
-        description: "Image size must be less than 5MB.",
-      });
-      return;
-    }
-
-    setUploadingImage(true);
-    setUploadProgress(0);
-
-    try {
-      const url = await new Promise<string>((resolve, reject) => {
-        const formDataUpload = new FormData();
-        formDataUpload.append("file", file);
-        formDataUpload.append(
-          "upload_preset",
-          process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "",
-        );
-
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.addEventListener("progress", (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percent);
-          }
-        });
-
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            const data = JSON.parse(xhr.responseText);
-            if (data.secure_url) {
-              resolve(data.secure_url);
-            } else {
-              reject(new Error("No URL returned from upload"));
-            }
-          } else {
-            reject(new Error("Upload failed"));
-          }
-        });
-
-        xhr.addEventListener("error", () =>
-          reject(new Error("Network error during upload")),
-        );
-        xhr.addEventListener("abort", () =>
-          reject(new Error("Upload cancelled")),
-        );
-
-        xhr.open(
-          "POST",
-          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        );
-        xhr.send(formDataUpload);
-      });
-
-      setFormData((prev) => ({ ...prev, drivers_license: url }));
-      setImagePreview(url);
-      toast.success("Image uploaded successfully");
-    } catch (err) {
-      console.error("Error uploading image:", err);
-      toast.error("Upload failed", {
-        description: "Could not upload your image. Please try again.",
-      });
-    } finally {
-      setUploadingImage(false);
-      setUploadProgress(0);
-    }
-  };
-
-  const removeImage = () => {
-    setFormData((prev) => ({ ...prev, drivers_license: "" }));
-    setImagePreview("");
-  };
-
   const handleSubmit = async () => {
     clearError();
 
@@ -234,6 +149,9 @@ export default function DriverApplyPage() {
       await applyAsDriver({
         ...formData,
         available_seats: parseInt(formData.available_seats) || 4,
+        vehicle_image: formData.vehicle_image || undefined,
+        vehicle_color: formData.vehicle_color || undefined,
+        vehicle_description: formData.vehicle_description || undefined,
       });
     } catch (err) {
       console.error("Application failed:", err);
@@ -284,6 +202,9 @@ export default function DriverApplyPage() {
                   ["Vehicle", application.vehicle_model],
                   ["Plate Number", application.plate_number],
                   ["Seats", String(application.available_seats)],
+                  ...(application.vehicle_color
+                    ? [["Color", application.vehicle_color]]
+                    : []),
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-4">
                     <span className="text-muted-foreground shrink-0">
@@ -428,7 +349,70 @@ export default function DriverApplyPage() {
                         {formData.available_seats}
                       </p>
                     </div>
+                    {formData.vehicle_color && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">
+                          Vehicle Color
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 border border-border"
+                            style={{
+                              backgroundColor:
+                                formData.vehicle_color.toLowerCase(),
+                            }}
+                          />
+                          <p className="text-sm font-medium text-[#042F40]">
+                            {formData.vehicle_color}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
+                  {formData.vehicle_description && (
+                    <div className="pl-6 mt-3">
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        Vehicle Description
+                      </p>
+                      <p className="text-sm text-[#042F40] leading-relaxed">
+                        {formData.vehicle_description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Vehicle Photo */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <ImageIcon className="w-4 h-4 text-[#042F40]" />
+                    <h3 className="font-semibold text-[#042F40] text-sm">
+                      Vehicle Photo
+                    </h3>
+                  </div>
+                  {formData.vehicle_image ? (
+                    <div className="pl-6">
+                      <div className="border overflow-hidden">
+                        <Image
+                          src={formData.vehicle_image}
+                          alt="Vehicle Photo"
+                          width={800}
+                          height={500}
+                          className="w-full h-auto max-h-64 object-cover"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pl-6">
+                      <div className="flex items-center gap-2 p-3 bg-muted/50 border text-xs text-muted-foreground">
+                        <Info className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          No vehicle photo uploaded — this is optional
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
@@ -682,6 +666,82 @@ export default function DriverApplyPage() {
                       Default: 4 passengers
                     </p>
                   </div>
+                  <VehicleColorPicker
+                    value={formData.vehicle_color}
+                    onChange={(color) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        vehicle_color: color,
+                      }))
+                    }
+                  />
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="vehicle_description"
+                      className="text-xs font-medium text-foreground"
+                    >
+                      Vehicle Description
+                    </Label>
+                    <textarea
+                      id="vehicle_description"
+                      name="vehicle_description"
+                      value={formData.vehicle_description}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          vehicle_description: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. Clean 4-door sedan with tinted windows, AC in good condition"
+                      maxLength={500}
+                      rows={3}
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                    />
+                    <div className="flex justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        Optional — describe any notable features
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.vehicle_description.length}/500
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* ── Vehicle Photo Upload (Optional) ─────────────────────── */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <ImageIcon className="w-4 h-4 text-[#042F40]" />
+                  <h3 className="font-semibold text-[#042F40] text-sm">
+                    Vehicle Photo
+                  </h3>
+                  <Badge variant="secondary" className="text-[10px] ml-1">
+                    Optional
+                  </Badge>
+                </div>
+                <div className="pl-6">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Upload a clear photo of your vehicle to help riders identify
+                    it easily.
+                  </p>
+
+                  <ImageDropzone
+                    imageUrl={formData.vehicle_image}
+                    onImageChange={(url) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        vehicle_image: url,
+                      }))
+                    }
+                    inputId="vehicle-upload"
+                    variant="image"
+                    size="sm"
+                    label="Drag & drop or click to upload"
+                    successLabel="Vehicle photo uploaded"
+                  />
                 </div>
               </div>
 
@@ -701,78 +761,21 @@ export default function DriverApplyPage() {
                     <span className="text-destructive">*</span>
                   </Label>
 
-                  {!imagePreview ? (
-                    <label
-                      htmlFor="license-upload"
-                      className="flex flex-col items-center justify-center border-2 border-dashed border-border p-8 cursor-pointer hover:border-[#042F40] hover:bg-muted/30 transition-colors"
-                    >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        id="license-upload"
-                        required={!formData.drivers_license}
-                      />
-                      {uploadingImage ? (
-                        <div className="w-full space-y-4">
-                          <div className="flex flex-col items-center">
-                            <Loader2 className="w-10 h-10 text-[#042F40] mb-3 animate-spin" />
-                            <p className="text-sm font-medium text-foreground mb-1">
-                              Uploading image...
-                            </p>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">
-                                Upload progress
-                              </span>
-                              <span className="font-semibold text-[#042F40]">
-                                {uploadProgress}%
-                              </span>
-                            </div>
-                            <Progress value={uploadProgress} className="h-2" />
-                          </div>
-                          <p className="text-xs text-muted-foreground text-center">
-                            Please wait while we upload your document
-                          </p>
-                        </div>
-                      ) : (
-                        <>
-                          <Upload className="w-10 h-10 text-muted-foreground mb-3" />
-                          <p className="text-sm font-medium text-foreground mb-1">
-                            Click to upload
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            PNG, JPG — up to 5MB
-                          </p>
-                        </>
-                      )}
-                    </label>
-                  ) : (
-                    <div className="relative">
-                      <div className="border overflow-hidden">
-                        <Image
-                          src={imagePreview}
-                          alt="License Preview"
-                          width={800}
-                          height={500}
-                          className="w-full h-auto"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        className="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1.5 hover:opacity-80 transition-opacity"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                      <div className="mt-2 flex items-center gap-1.5 text-xs text-green-700">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Uploaded successfully</span>
-                      </div>
-                    </div>
-                  )}
+                  <ImageDropzone
+                    imageUrl={formData.drivers_license}
+                    onImageChange={(url) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        drivers_license: url,
+                      }))
+                    }
+                    inputId="license-upload"
+                    variant="upload"
+                    size="md"
+                    label="Drag & drop or click to upload"
+                    successLabel="Uploaded successfully"
+                    required={!formData.drivers_license}
+                  />
                 </div>
               </div>
 
@@ -807,7 +810,7 @@ export default function DriverApplyPage() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={!termsAccepted || uploadingImage}
+                disabled={!termsAccepted}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 Review Application

@@ -32,6 +32,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ProfileAvatar } from "@/components/shared/profile-avatar";
 
 export default function UserDetailPage({
   params,
@@ -70,10 +71,15 @@ export default function UserDetailPage({
     if (!user) return;
     setFlagLoading(true);
     try {
-      await flagUser(user._id, !user.is_flagged);
-      // Re-fetch to get updated data
+      const newFlagState = !user.is_flagged;
+      await flagUser(user._id, newFlagState);
       const updated = await getUserById(id);
       setUser(updated);
+      toast.success(
+        newFlagState
+          ? "User account has been flagged"
+          : "User account has been unflagged",
+      );
     } catch {
       toast.error("Failed to update user flag status");
     } finally {
@@ -131,9 +137,11 @@ export default function UserDetailPage({
             </Link>
           </Button>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
+            <ProfileAvatar
+              src={user.profile_picture}
+              name={user.name}
+              size="md"
+            />
             <div>
               <h1 className="text-base font-semibold leading-tight">
                 {user.name}
@@ -156,7 +164,11 @@ export default function UserDetailPage({
           <Button
             size="sm"
             variant={user.is_flagged ? "outline" : "secondary"}
-            className="text-xs"
+            className={`text-xs ${
+              user.is_flagged
+                ? "border-green-200 text-green-700 hover:bg-green-50"
+                : "text-amber-700 hover:bg-amber-50"
+            }`}
             onClick={handleFlag}
             disabled={flagLoading}
           >
@@ -183,17 +195,32 @@ export default function UserDetailPage({
 
       {/* Status banner */}
       {user.is_flagged && (
-        <div className="flex items-center gap-3 border border-destructive/30 bg-destructive/5 p-4">
-          <XCircle className="h-5 w-5 text-destructive shrink-0" />
-          <div>
+        <div className="flex items-center gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+            <Flag className="h-4 w-4 text-destructive" />
+          </div>
+          <div className="flex-1">
             <p className="text-sm font-medium text-destructive">
-              This user is flagged
+              This user&apos;s account is flagged
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              This account has been flagged and may have restricted access.
-              Click &quot;Unflag User&quot; to restore normal access.
+            <p className="text-xs text-muted-foreground">
+              The user cannot sign in until their account is unflagged.
             </p>
           </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-green-200 text-green-700 hover:bg-green-50 text-xs shrink-0"
+            onClick={handleFlag}
+            disabled={flagLoading}
+          >
+            {flagLoading ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            Unflag Account
+          </Button>
         </div>
       )}
 

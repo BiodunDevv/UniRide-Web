@@ -111,7 +111,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const userData = {
     name: user?.name || "Admin User",
     email: user?.email || "admin@uniride.ng",
-    avatar: "",
+    avatar: user?.profile_picture || "",
   };
 
   return (

@@ -43,11 +43,15 @@ import {
   Edit2,
   Trash2,
   Flag,
+  FlagOff,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  Loader2,
+  ShieldAlert,
+  CheckCircle,
 } from "lucide-react";
 import type { Admin } from "@/store/useAdminStore";
 
@@ -56,6 +60,7 @@ interface AdminsTableProps {
   onFlag?: (admin: Admin) => void;
   onEdit?: (admin: Admin) => void;
   onDelete?: (admin: Admin) => void;
+  flaggingId?: string | null;
 }
 
 export function AdminsTable({
@@ -63,6 +68,7 @@ export function AdminsTable({
   onFlag,
   onEdit,
   onDelete,
+  flaggingId,
 }: AdminsTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -78,6 +84,7 @@ export function AdminsTable({
             </div>
             <AdminDetailDrawer
               admin={row.original}
+              onFlag={onFlag ? () => onFlag(row.original) : undefined}
               onEdit={onEdit ? () => onEdit(row.original) : undefined}
               onDelete={onDelete ? () => onDelete(row.original) : undefined}
             />
@@ -111,10 +118,20 @@ export function AdminsTable({
         header: "Status",
         cell: ({ row }) => (
           <Badge
-            variant={!row.original.is_flagged ? "outline" : "secondary"}
+            variant={row.original.is_flagged ? "destructive" : "outline"}
             className="text-muted-foreground px-1.5 capitalize"
           >
-            {row.original.is_flagged ? "Flagged" : "Active"}
+            {row.original.is_flagged ? (
+              <span className="flex items-center gap-1">
+                <ShieldAlert className="h-3 w-3" />
+                Flagged
+              </span>
+            ) : (
+              <span className="flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Active
+              </span>
+            )}
           </Badge>
         ),
       },
@@ -142,12 +159,31 @@ export function AdminsTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              {onFlag && (
-                <DropdownMenuItem onClick={() => onFlag(row.original)}>
-                  <Flag className="h-3.5 w-3.5 mr-1.5" />
-                  {row.original.is_flagged ? "Unflag" : "Flag"}
-                </DropdownMenuItem>
-              )}
+              {onFlag &&
+                (() => {
+                  const isFlagged = row.original.is_flagged;
+                  const isLoading = flaggingId === row.original._id;
+                  return (
+                    <DropdownMenuItem
+                      onClick={() => onFlag(row.original)}
+                      disabled={isLoading}
+                      className={
+                        isFlagged
+                          ? "text-green-600 focus:text-green-600"
+                          : "text-amber-600 focus:text-amber-600"
+                      }
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : isFlagged ? (
+                        <FlagOff className="h-3.5 w-3.5 mr-1.5" />
+                      ) : (
+                        <Flag className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      {isFlagged ? "Unflag Admin" : "Flag Admin"}
+                    </DropdownMenuItem>
+                  );
+                })()}
               {onEdit && (
                 <>
                   <DropdownMenuSeparator />

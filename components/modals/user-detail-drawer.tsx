@@ -16,7 +16,16 @@ import {
 } from "@/components/ui/drawer";
 import Link from "next/link";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Users, Mail, Calendar, Flag, ExternalLink } from "lucide-react";
+import { ProfileAvatar } from "@/components/shared/profile-avatar";
+import {
+  Users,
+  Mail,
+  Calendar,
+  Flag,
+  FlagOff,
+  ExternalLink,
+  ShieldAlert,
+} from "lucide-react";
 import type { User } from "@/store/useAdminStore";
 
 interface UserDetailDrawerProps {
@@ -52,17 +61,31 @@ export function UserDetailDrawer({
         <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto px-4 py-2 text-sm">
           <Separator />
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
+            <ProfileAvatar
+              src={user.profile_picture}
+              name={user.name}
+              size="md"
+            />
             <div>
               <p className="text-sm font-medium">{user.name}</p>
-              <Badge
-                variant={!user.is_flagged ? "outline" : "destructive"}
-                className="text-[10px] capitalize mt-1"
-              >
-                {user.is_flagged ? "Flagged" : "Active"}
-              </Badge>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Badge
+                  variant={!user.is_flagged ? "outline" : "destructive"}
+                  className="text-[10px] capitalize"
+                >
+                  {user.is_flagged ? (
+                    <span className="flex items-center gap-1">
+                      <ShieldAlert className="h-2.5 w-2.5" />
+                      Flagged
+                    </span>
+                  ) : (
+                    "Active"
+                  )}
+                </Badge>
+                <Badge variant="secondary" className="text-[10px] capitalize">
+                  {user.role}
+                </Badge>
+              </div>
             </div>
           </div>
           <Separator />
@@ -115,11 +138,19 @@ export function UserDetailDrawer({
               {onFlag && (
                 <Button
                   size="sm"
-                  variant="secondary"
-                  className="text-xs flex-1"
+                  variant={user.is_flagged ? "outline" : "secondary"}
+                  className={`text-xs flex-1 ${
+                    user.is_flagged
+                      ? "border-green-200 text-green-700 hover:bg-green-50"
+                      : "text-amber-700 hover:bg-amber-50"
+                  }`}
                   onClick={onFlag}
                 >
-                  <Flag className="h-3.5 w-3.5 mr-1.5" />
+                  {user.is_flagged ? (
+                    <FlagOff className="h-3.5 w-3.5 mr-1.5" />
+                  ) : (
+                    <Flag className="h-3.5 w-3.5 mr-1.5" />
+                  )}
                   {user.is_flagged ? "Unflag" : "Flag"}
                 </Button>
               )}

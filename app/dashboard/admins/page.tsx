@@ -62,6 +62,7 @@ export default function AdminsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [flaggingId, setFlaggingId] = useState<string | null>(null);
 
   useEffect(() => {
     getAllAdmins();
@@ -78,12 +79,12 @@ export default function AdminsPage() {
   );
 
   const handleFlagAdmin = async (admin: Admin) => {
-    setActionLoading(true);
+    setFlaggingId(admin._id);
     try {
       await flagUser(admin._id, !admin.is_flagged);
       await getAllAdmins();
     } finally {
-      setActionLoading(false);
+      setFlaggingId(null);
     }
   };
 
@@ -187,6 +188,7 @@ export default function AdminsPage() {
             <AdminsTable
               admins={filteredAdmins}
               onFlag={handleFlagAdmin}
+              flaggingId={flaggingId}
               onEdit={(admin) => {
                 setSelectedAdmin(admin);
                 setShowEditModal(true);

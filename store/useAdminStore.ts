@@ -22,6 +22,9 @@ export interface DriverApplication {
   plate_number: string;
   available_seats: number;
   drivers_license: string;
+  vehicle_image?: string;
+  vehicle_color?: string;
+  vehicle_description?: string;
   status: "pending" | "approved" | "rejected";
   reviewed_by?: {
     _id: string;
@@ -47,12 +50,20 @@ export interface Driver {
     email_verified: boolean;
     createdAt: string;
     is_flagged: boolean;
+    profile_picture?: string;
   };
   phone: string;
   vehicle_model: string;
   plate_number: string;
   available_seats: number;
   drivers_license: string;
+  vehicle_image?: string;
+  vehicle_color?: string;
+  vehicle_description?: string;
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
+  license_last_updated?: string;
   application_status: string;
   status: string;
   approved_by?: {
@@ -86,6 +97,7 @@ export interface User {
   email: string;
   role: string;
   is_flagged: boolean;
+  profile_picture?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -146,6 +158,8 @@ interface AdminState {
   deleteDriver: (id: string, force?: boolean) => Promise<void>;
   getFarePolicy: () => Promise<void>;
   updateFarePolicy: (policy: Partial<FarePolicy>) => Promise<void>;
+  adminUpdateDriver: (id: string, updates: Partial<Driver>) => Promise<void>;
+  resetDriverLicense: (id: string) => Promise<void>;
   flagUser: (id: string, is_flagged: boolean) => Promise<void>;
   sendBroadcastMessage: (
     title: string,
@@ -824,6 +838,72 @@ export const useAdminStore = create<AdminState>((set) => ({
         error: errorMessage,
         isLoading: false,
       });
+      throw error;
+    }
+  },
+
+  adminUpdateDriver: async (id: string, updates: Partial<Driver>) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(`${API_URL}/api/admin/drivers/edit/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update driver");
+      }
+
+      toast.success("Driver updated successfully");
+      set({ isLoading: false, error: null });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  resetDriverLicense: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(
+        `${API_URL}/api/admin/drivers/reset-license/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to reset license");
+      }
+
+      toast.success("Driver license restriction reset successfully");
+      set({ isLoading: false, error: null });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+      set({ error: errorMessage, isLoading: false });
       throw error;
     }
   },
