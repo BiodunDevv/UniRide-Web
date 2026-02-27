@@ -229,6 +229,12 @@ export default function DriverApplyPage() {
               <Button onClick={() => router.push("/")} className="w-full">
                 Return to Home
               </Button>
+              <Button variant="outline" className="w-full mt-2" asChild>
+                <Link href="/driver-apply/check-status">
+                  <Eye className="w-3.5 h-3.5 mr-1.5" />
+                  Check Application Status
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -492,6 +498,25 @@ export default function DriverApplyPage() {
                 schedule.
               </p>
             </div>
+
+            {/* Check Status Banner */}
+            <Link
+              href="/driver-apply/check-status"
+              className="flex items-center gap-3 mb-6 px-4 py-3 bg-[#042F40]/3 border border-[#042F40]/10 hover:bg-[#042F40]/6 transition-colors group"
+            >
+              <div className="w-8 h-8 bg-[#042F40]/10 flex items-center justify-center shrink-0 rounded-full">
+                <Eye className="w-4 h-4 text-[#042F40]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-[#042F40]">
+                  Already applied?
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Check your application status with your email
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-[#042F40] transition-colors shrink-0" />
+            </Link>
 
             <Alert className="mb-6 border-blue-200 bg-blue-50">
               <FileText className="size-4 text-blue-700" />

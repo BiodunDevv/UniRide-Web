@@ -17,6 +17,7 @@ interface DriverApplication {
   available_seats: number;
   status: "pending" | "approved" | "rejected";
   rejection_reason?: string;
+  reviewed_at?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +40,8 @@ interface DriverState {
     vehicle_color?: string;
     vehicle_description?: string;
   }) => Promise<void>;
+  checkApplicationStatus: (email: string) => Promise<void>;
+  clearApplication: () => void;
   clearError: () => void;
 }
 
@@ -48,6 +51,34 @@ export const useDriverStore = create<DriverState>()((set) => ({
   error: null,
 
   clearError: () => set({ error: null }),
+  clearApplication: () => set({ application: null, error: null }),
+
+  checkApplicationStatus: async (email) => {
+    set({ isLoading: true, error: null, application: null });
+    try {
+      const response = await fetch(`${API_URL}/api/driver/check-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const msg = data.message || "Could not check application status";
+        set({ error: msg, isLoading: false });
+        if (data.code !== "NOT_FOUND") toast.error(msg);
+        throw new Error(msg);
+      }
+
+      set({ application: data.data, isLoading: false, error: null });
+    } catch (error) {
+      const msg =
+        error instanceof Error ? error.message : "Failed to check status";
+      set({ error: msg, isLoading: false });
+      throw error;
+    }
+  },
 
   applyAsDriver: async (data) => {
     set({ isLoading: true, error: null });

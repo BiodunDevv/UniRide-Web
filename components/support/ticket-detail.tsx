@@ -10,6 +10,9 @@ import {
   Send,
   User,
   MessageSquare,
+  XCircle,
+  ShieldCheck,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,34 +23,40 @@ import { PriorityBadge, StatusBadge } from "./ticket-helpers";
 
 interface Message {
   _id: string;
-  sender_id: { _id: string; name: string; role: string };
+  sender_id?: { _id: string; name: string; role: string } | null;
+  sender_name?: string;
   sender_role: string;
   message: string;
-  createdAt: string;
+  timestamp: string;
 }
 
 interface Ticket {
   _id: string;
-  ticket_number: string;
+  ticket_number?: string;
   subject: string;
   category: string;
   priority: string;
   status: string;
-  user_id: { _id: string; name: string; email: string };
+  user_id?: { _id: string; name: string; email: string } | null;
+  guest_name?: string;
+  guest_email?: string;
   assigned_to?: { _id: string; name: string; email: string } | null;
   messages: Message[];
   resolved_at?: string;
+  closed_at?: string;
   createdAt: string;
 }
 
 interface TicketDetailProps {
   ticket: Ticket;
   currentUserId?: string;
+  currentUserRole?: string;
   processingTicketId: string | null;
   onBack: () => void;
   onAccept: (id: string) => void;
   onDecline: (id: string) => void;
   onResolve: (id: string) => void;
+  onClose: (id: string) => void;
   onSendMessage: (id: string, message: string) => Promise<void>;
   onOpenPriorityModal: (id: string, currentPriority: string) => void;
 }
@@ -55,11 +64,13 @@ interface TicketDetailProps {
 export function TicketDetail({
   ticket,
   currentUserId,
+  currentUserRole,
   processingTicketId,
   onBack,
   onAccept,
   onDecline,
   onResolve,
+  onClose,
   onSendMessage,
   onOpenPriorityModal,
 }: TicketDetailProps) {
@@ -67,8 +78,37 @@ export function TicketDetail({
   const scrollRef = useRef<HTMLDivElement>(null);
   const isProcessing = processingTicketId === ticket._id;
   const isAssignedToMe = ticket.assigned_to?._id === currentUserId;
+  const isSuperAdmin = currentUserRole === "super_admin";
+  const isAdmin = currentUserRole === "admin" || isSuperAdmin;
+  const isClosed = ticket.status === "closed";
+  const isResolved = ticket.status === "resolved";
+
+  // Can reply: assigned admin, super admin on any assigned ticket, or ticket owner (for user-admin chat)
   const canReply =
-    ticket.status !== "closed" && ticket.status !== "resolved" && isAssignedToMe;
+    !isClosed &&
+    (isAssignedToMe ||
+      (isSuperAdmin && ticket.assigned_to) ||
+      (isOwner && ticket.status !== "resolved"));
+
+  // Can accept: unassigned open ticket by any admin, or super admin can reassign
+  const canAccept =
+    !isClosed &&
+    isAdmin &&
+    ((!ticket.assigned_to && ticket.status === "open") ||
+      (isSuperAdmin && ticket.assigned_to && !isAssignedToMe));
+
+  // Can decline: only the assigned admin themselves, or super admin for any assigned ticket
+  const canDecline =
+    ticket.assigned_to &&
+    ticket.status === "in_progress" &&
+    (isAssignedToMe || isSuperAdmin);
+
+  // Can resolve: assigned to me and in_progress, or super admin for any in_progress
+  const canResolve =
+    ticket.status === "in_progress" && (isAssignedToMe || isSuperAdmin);
+
+  // Can close: resolved tickets by any admin
+  const canClose = isResolved && isAdmin;
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -108,10 +148,21 @@ export function TicketDetail({
             <p className="text-sm font-semibold leading-tight">
               {ticket.subject}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              #{ticket.ticket_number}
-            </p>
+            {ticket.ticket_number && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                #{ticket.ticket_number}
+              </p>
+            )}
           </div>
+          {isSuperAdmin && (
+            <Badge
+              variant="outline"
+              className="text-[9px] gap-1 shrink-0 border-amber-500/30 text-amber-600"
+            >
+              <ShieldCheck className="h-3 w-3" />
+              Super Admin
+            </Badge>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-1.5 pl-10">
@@ -137,9 +188,11 @@ export function TicketDetail({
             <Label className="text-[10px] text-muted-foreground">
               Requester
             </Label>
-            <p className="font-medium mt-0.5">{ticket.user_id.name}</p>
+            <p className="font-medium mt-0.5">
+              {ticket.user_id?.name || ticket.guest_name || "Guest"}
+            </p>
             <p className="text-[10px] text-muted-foreground">
-              {ticket.user_id.email}
+              {ticket.user_id?.email || ticket.guest_email || ""}
             </p>
           </div>
           <div>
@@ -152,16 +205,20 @@ export function TicketDetail({
               })}
             </p>
           </div>
-          {ticket.assigned_to && (
-            <div>
-              <Label className="text-[10px] text-muted-foreground">
-                Assigned To
-              </Label>
-              <p className="font-medium text-primary mt-0.5">
-                {ticket.assigned_to.name}
-              </p>
-            </div>
-          )}
+          <div>
+            <Label className="text-[10px] text-muted-foreground">
+              Assigned To
+            </Label>
+            <p
+              className={`font-medium mt-0.5 ${
+                ticket.assigned_to ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              {ticket.assigned_to
+                ? `${ticket.assigned_to.name}${isAssignedToMe ? " (You)" : ""}`
+                : "Unassigned"}
+            </p>
+          </div>
           {ticket.resolved_at && (
             <div>
               <Label className="text-[10px] text-muted-foreground">
@@ -176,11 +233,25 @@ export function TicketDetail({
               </p>
             </div>
           )}
+          {ticket.closed_at && (
+            <div>
+              <Label className="text-[10px] text-muted-foreground">
+                Closed
+              </Label>
+              <p className="font-medium text-muted-foreground mt-0.5">
+                {new Date(ticket.closed_at).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Action buttons */}
         <div className="flex gap-2 pl-1 flex-wrap">
-          {!ticket.assigned_to && ticket.status === "open" && (
+          {canAccept && (
             <Button
               size="sm"
               className="text-xs h-7"
@@ -192,34 +263,52 @@ export function TicketDetail({
               ) : (
                 <ThumbsUp className="h-3.5 w-3.5 mr-1.5" />
               )}
-              Accept Ticket
+              {isSuperAdmin && ticket.assigned_to
+                ? "Reassign to Me"
+                : "Accept Ticket"}
             </Button>
           )}
-          {isAssignedToMe && ticket.status === "in_progress" && (
-            <>
-              <Button
-                size="sm"
-                className="text-xs h-7"
-                onClick={() => onResolve(ticket._id)}
-                disabled={isProcessing}
-              >
-                {isProcessing ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
-                )}
-                Mark Resolved
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="text-xs h-7"
-                onClick={() => onDecline(ticket._id)}
-                disabled={isProcessing}
-              >
-                Decline
-              </Button>
-            </>
+          {canResolve && (
+            <Button
+              size="sm"
+              className="text-xs h-7"
+              onClick={() => onResolve(ticket._id)}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Mark Resolved
+            </Button>
+          )}
+          {canClose && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs h-7"
+              onClick={() => onClose(ticket._id)}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Close Ticket
+            </Button>
+          )}
+          {canDecline && (
+            <Button
+              size="sm"
+              variant="destructive"
+              className="text-xs h-7"
+              onClick={() => onDecline(ticket._id)}
+              disabled={isProcessing}
+            >
+              {isSuperAdmin && !isAssignedToMe ? "Unassign" : "Decline"}
+            </Button>
           )}
         </div>
       </div>
@@ -236,22 +325,29 @@ export function TicketDetail({
           </div>
         ) : (
           ticket.messages.map((msg) => {
-            const isMine = msg.sender_id._id === currentUserId;
+            const isMine = msg.sender_id?._id === currentUserId;
+            const isAdminMsg = ["admin", "super_admin"].includes(
+              msg.sender_role,
+            );
             return (
               <div
                 key={msg._id}
                 className={`flex ${isMine ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[75%] p-3 text-xs space-y-1.5 ${
+                  className={`max-w-[75%] p-3 text-xs space-y-1.5 rounded-lg ${
                     isMine
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground border"
+                      : isAdminMsg
+                        ? "bg-blue-50 dark:bg-blue-950/30 text-foreground border border-blue-200 dark:border-blue-800"
+                        : "bg-muted text-foreground border"
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <User className="h-3 w-3 shrink-0" />
-                    <span className="font-medium">{msg.sender_id.name}</span>
+                    <span className="font-medium">
+                      {msg.sender_id?.name || msg.sender_name || "Guest"}
+                    </span>
                     <Badge
                       variant={isMine ? "outline" : "secondary"}
                       className={`text-[9px] px-1 py-0 capitalize ${
@@ -260,7 +356,9 @@ export function TicketDetail({
                           : ""
                       }`}
                     >
-                      {msg.sender_role}
+                      {msg.sender_role === "super_admin"
+                        ? "Super Admin"
+                        : msg.sender_role}
                     </Badge>
                   </div>
                   <p className="whitespace-pre-wrap leading-relaxed">
@@ -273,7 +371,7 @@ export function TicketDetail({
                         : "text-muted-foreground"
                     }`}
                   >
-                    {new Date(msg.createdAt).toLocaleString(undefined, {
+                    {new Date(msg.timestamp).toLocaleString(undefined, {
                       month: "short",
                       day: "numeric",
                       hour: "2-digit",
@@ -318,11 +416,35 @@ export function TicketDetail({
           </p>
         </div>
       )}
+
+      {/* Read-only notice for super admin viewing other admin's tickets */}
+      {isSuperAdmin &&
+        !isAssignedToMe &&
+        ticket.assigned_to &&
+        !canReply &&
+        !isClosed &&
+        !isResolved && (
+          <div className="border-t p-3 bg-muted/30">
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+              <Eye className="h-3 w-3" />
+              Viewing as observer — Assigned to {ticket.assigned_to.name}
+            </p>
+          </div>
+        )}
+
+      {/* Closed/Resolved notice */}
+      {(isClosed || (isResolved && !canClose)) && (
+        <div className="border-t p-3 bg-muted/30">
+          <p className="text-[10px] text-muted-foreground text-center">
+            This ticket is {ticket.status.replace("_", " ")}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ─── Empty state ─── */
+/* --- Empty state --- */
 export function TicketDetailEmpty() {
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[360px] border bg-muted/30 text-muted-foreground gap-3">

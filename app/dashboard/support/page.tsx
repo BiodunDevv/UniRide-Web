@@ -29,6 +29,9 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  Inbox,
+  ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 
 type TabType = "available" | "my-tickets" | "all";
@@ -40,21 +43,26 @@ function SupportContent() {
   const {
     tickets,
     availableTickets,
+    myTickets,
     currentTicket,
     isLoading,
     error,
     processingTicketId,
     getAllTickets,
     getAvailableTickets,
+    getMyAssignedTickets,
     getTicketById,
     acceptTicket,
     declineTicket,
     addMessage,
     resolveTicket,
+    closeTicket,
     updatePriority,
     clearError,
     setCurrentTicket,
   } = useChatStore();
+
+  const isSuperAdmin = user?.role === "super_admin";
 
   const initialTab = useMemo<TabType>(() => {
     const tab = searchParams.get("tab");
@@ -75,20 +83,24 @@ function SupportContent() {
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
     setCurrentTicket(null);
+    setStatusFilter("all");
+    setPriorityFilter("all");
     router.push(`/dashboard/support?tab=${tab}`, { scroll: false });
   };
 
+  // Load tickets based on active tab
   const loadTickets = useCallback(async () => {
     try {
+      const pf = priorityFilter !== "all" ? priorityFilter : undefined;
+      const sf = statusFilter !== "all" ? statusFilter : undefined;
+
       if (activeTab === "available") {
-        await getAvailableTickets(
-          priorityFilter !== "all" ? priorityFilter : undefined,
-        );
+        await getAvailableTickets(pf);
+      } else if (activeTab === "my-tickets") {
+        await getMyAssignedTickets(sf, pf);
       } else {
-        await getAllTickets(
-          statusFilter !== "all" ? statusFilter : undefined,
-          priorityFilter !== "all" ? priorityFilter : undefined,
-        );
+        // "all" tab
+        await getAllTickets(sf, pf);
       }
     } catch {
       // errors handled in store via toast
@@ -98,6 +110,7 @@ function SupportContent() {
     statusFilter,
     priorityFilter,
     getAvailableTickets,
+    getMyAssignedTickets,
     getAllTickets,
   ]);
 
@@ -105,21 +118,29 @@ function SupportContent() {
     loadTickets();
   }, [loadTickets]);
 
+  // Also load available count on mount for badge
+  useEffect(() => {
+    getAvailableTickets().catch(() => {});
+    getMyAssignedTickets().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Display tickets based on active tab
   const displayTickets = useMemo(() => {
     if (activeTab === "available") return availableTickets;
-    if (activeTab === "my-tickets")
-      return tickets.filter((t) => t.assigned_to?._id === user?.id);
+    if (activeTab === "my-tickets") return myTickets;
     return tickets;
-  }, [activeTab, tickets, availableTickets, user?.id]);
+  }, [activeTab, tickets, availableTickets, myTickets]);
 
+  // Stats from all data sources
   const stats = useMemo(
     () => ({
-      open: tickets.filter((t) => t.status === "open").length,
-      inProgress: tickets.filter((t) => t.status === "in_progress").length,
-      resolved: tickets.filter((t) => t.status === "resolved").length,
-      total: tickets.length,
+      available: availableTickets.length,
+      myActive: myTickets.filter((t) => t.status === "in_progress").length,
+      myTotal: myTickets.length,
+      resolved: myTickets.filter((t) => t.status === "resolved").length,
     }),
-    [tickets],
+    [availableTickets, myTickets],
   );
 
   const handleSelect = async (id: string) => {
@@ -132,8 +153,16 @@ function SupportContent() {
 
   const handleAccept = async (id: string) => {
     try {
-      await acceptTicket(id);
-      await loadTickets();
+      const accepted = await acceptTicket(id);
+      // Auto-switch to "my-tickets" tab and keep the ticket detail open
+      setActiveTab("my-tickets");
+      router.push("/dashboard/support?tab=my-tickets", { scroll: false });
+      // Refresh my tickets to ensure the list is up-to-date
+      await getMyAssignedTickets();
+      // Re-fetch the ticket to ensure currentTicket is fresh
+      if (accepted?._id) {
+        await getTicketById(accepted._id);
+      }
     } catch {
       /* handled */
     }
@@ -153,6 +182,17 @@ function SupportContent() {
     try {
       await resolveTicket(id);
       await loadTickets();
+      if (currentTicket?._id === id) await getTicketById(id);
+    } catch {
+      /* handled */
+    }
+  };
+
+  const handleClose = async (id: string) => {
+    try {
+      await closeTicket(id);
+      await loadTickets();
+      if (currentTicket?._id === id) await getTicketById(id);
     } catch {
       /* handled */
     }
@@ -174,24 +214,42 @@ function SupportContent() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <PageHeader
-        title="Support"
-        description="Manage and respond to user support tickets"
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Support Center"
+          description={
+            isSuperAdmin
+              ? "Oversee all support tickets and team performance"
+              : "Manage and respond to user support tickets"
+          }
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs h-8 gap-1.5"
+          onClick={loadTickets}
+          disabled={isLoading}
+        >
+          <RefreshCw
+            className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </Button>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatsCard
-          icon={AlertCircle}
+          icon={Inbox}
           iconColor="text-yellow-500"
-          value={stats.open}
-          label="Open"
+          value={stats.available}
+          label="Available"
         />
         <StatsCard
           icon={Clock}
           iconColor="text-blue-500"
-          value={stats.inProgress}
-          label="In Progress"
+          value={stats.myActive}
+          label="My Active"
         />
         <StatsCard
           icon={CheckCircle2}
@@ -199,7 +257,11 @@ function SupportContent() {
           value={stats.resolved}
           label="Resolved"
         />
-        <StatsCard icon={MessageSquare} value={stats.total} label="Total" />
+        <StatsCard
+          icon={MessageSquare}
+          value={stats.myTotal}
+          label="My Total"
+        />
       </div>
 
       {/* Error */}
@@ -245,10 +307,25 @@ function SupportContent() {
                 </TabsTrigger>
                 <TabsTrigger value="my-tickets" className="text-xs flex-1">
                   Mine
+                  {myTickets.filter((t) => t.status === "in_progress").length >
+                    0 && (
+                    <Badge
+                      variant="default"
+                      className="text-[9px] px-1.5 py-0 ml-1"
+                    >
+                      {
+                        myTickets.filter((t) => t.status === "in_progress")
+                          .length
+                      }
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="all" className="text-xs flex-1">
-                  All
-                </TabsTrigger>
+                {isSuperAdmin && (
+                  <TabsTrigger value="all" className="text-xs flex-1">
+                    <ShieldCheck className="h-3 w-3 mr-1" />
+                    All
+                  </TabsTrigger>
+                )}
               </TabsList>
             </Tabs>
           </div>
@@ -302,6 +379,7 @@ function SupportContent() {
               currentTicketId={currentTicket?._id}
               isLoading={isLoading}
               onSelect={handleSelect}
+              showAssignedTo={activeTab === "all"}
             />
           </div>
         </div>
@@ -312,11 +390,13 @@ function SupportContent() {
             <TicketDetail
               ticket={currentTicket}
               currentUserId={user?.id}
+              currentUserRole={user?.role}
               processingTicketId={processingTicketId}
               onBack={() => setCurrentTicket(null)}
               onAccept={handleAccept}
               onDecline={handleDecline}
               onResolve={handleResolve}
+              onClose={handleClose}
               onSendMessage={handleSendMessage}
               onOpenPriorityModal={(id, current) =>
                 setPriorityModal({ open: true, ticketId: id, current })
@@ -355,4 +435,3 @@ export default function SupportPage() {
     </Suspense>
   );
 }
-import { TicketsTable } from "@/components/tables/tickets-table";

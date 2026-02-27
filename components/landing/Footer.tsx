@@ -76,6 +76,14 @@ export default function Footer() {
                   Terms of Service
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/support"
+                  className="hover:text-primary-foreground transition"
+                >
+                  Support
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -167,6 +175,14 @@ export default function Footer() {
                 >
                   Driver Support
                 </a>
+              </li>
+              <li>
+                <Link
+                  href="/support"
+                  className="hover:text-primary-foreground transition"
+                >
+                  Help Center
+                </Link>
               </li>
             </ul>
           </div>

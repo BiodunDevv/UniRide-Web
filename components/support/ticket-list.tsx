@@ -1,19 +1,26 @@
 "use client";
 
-import { Loader2, MessageSquare, User, Calendar } from "lucide-react";
+import {
+  Loader2,
+  MessageSquare,
+  User,
+  Calendar,
+  UserCheck,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { PriorityBadge, StatusBadge } from "./ticket-helpers";
 import { cn } from "@/lib/utils";
 
 interface Ticket {
   _id: string;
-  ticket_number: string;
+  ticket_number?: string;
   subject: string;
   category: string;
   priority: string;
   status: string;
-  user_id: { _id: string; name: string; email: string };
+  user_id?: { _id: string; name: string; email: string } | null;
+  guest_name?: string;
+  guest_email?: string;
   assigned_to?: { _id: string; name: string } | null;
   messages: unknown[];
   createdAt: string;
@@ -24,6 +31,7 @@ interface TicketListProps {
   currentTicketId?: string;
   isLoading: boolean;
   onSelect: (id: string) => void;
+  showAssignedTo?: boolean;
 }
 
 export function TicketList({
@@ -31,6 +39,7 @@ export function TicketList({
   currentTicketId,
   isLoading,
   onSelect,
+  showAssignedTo = false,
 }: TicketListProps) {
   if (isLoading && tickets.length === 0) {
     return (
@@ -75,12 +84,21 @@ export function TicketList({
               <Badge variant="outline" className="text-[10px] capitalize">
                 {ticket.category}
               </Badge>
+              {ticket.messages.length > 1 && (
+                <Badge
+                  variant="secondary"
+                  className="text-[9px] gap-0.5 px-1.5"
+                >
+                  <MessageSquare className="h-2.5 w-2.5" />
+                  {ticket.messages.length}
+                </Badge>
+              )}
             </div>
 
             <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <User className="h-3 w-3" />
-                {ticket.user_id.name}
+                {ticket.user_id?.name || ticket.guest_name || "Guest"}
               </span>
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
@@ -88,7 +106,13 @@ export function TicketList({
               </span>
             </div>
 
-            {ticket.assigned_to && (
+            {showAssignedTo && ticket.assigned_to && (
+              <p className="text-[10px] text-primary mt-1.5 flex items-center gap-1">
+                <UserCheck className="h-3 w-3" />
+                {ticket.assigned_to.name}
+              </p>
+            )}
+            {!showAssignedTo && ticket.assigned_to && (
               <p className="text-[10px] text-primary mt-1.5">
                 Assigned to {ticket.assigned_to.name}
               </p>
