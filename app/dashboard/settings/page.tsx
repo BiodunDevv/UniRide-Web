@@ -516,6 +516,7 @@ interface AuditSummary {
   broadcasts: number;
   bookings: number;
   rides: number;
+  locations: number;
 }
 
 const AUDIT_TARGETS = [
@@ -524,6 +525,7 @@ const AUDIT_TARGETS = [
   { id: "broadcasts", label: "Broadcast Messages", icon: "📢" },
   { id: "bookings", label: "Completed/Cancelled Bookings", icon: "📋" },
   { id: "ride_history", label: "Completed/Cancelled Rides", icon: "🚗" },
+  { id: "locations", label: "Campus Locations", icon: "📍" },
 ] as const;
 
 function AuditTab() {
@@ -636,6 +638,12 @@ function AuditTab() {
                   <p className="text-lg font-bold">{summary.rides}</p>
                   <p className="text-[10px] text-muted-foreground">
                     Completed Rides
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-lg font-bold">{summary.locations}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Campus Locations
                   </p>
                 </div>
               </div>
@@ -958,6 +966,275 @@ function LanguagesTab() {
   );
 }
 
+/* ─── Platform Tab ─── */
+function PlatformTab() {
+  const [settings, setSettings] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await authFetch(`${API_URL}/api/platform-settings/admin`);
+      setSettings(data.data);
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to load settings",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const handleSave = async () => {
+    if (!settings) return;
+    try {
+      setSaving(true);
+      await authFetch(`${API_URL}/api/platform-settings`, {
+        method: "PATCH",
+        body: JSON.stringify(settings),
+      });
+      toast.success("Platform settings updated");
+      fetchSettings();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to save settings",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateField = (key: string, value: unknown) => {
+    setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <div className="text-center py-12 text-sm text-muted-foreground">
+        Failed to load platform settings
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Map Provider */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Map Provider
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Choose which map provider mobile apps use. Expo Maps is a fallback
+            for Expo Go development.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div
+              className={`relative rounded-lg border-2 p-4 cursor-pointer transition-colors ${
+                settings.map_provider === "mapbox"
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-muted-foreground/30"
+              }`}
+              onClick={() => updateField("map_provider", "mapbox")}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-6 w-6 rounded bg-blue-500 flex items-center justify-center">
+                  <span className="text-white text-[10px] font-bold">MB</span>
+                </div>
+                <span className="text-sm font-medium">Mapbox</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Full-featured maps with custom styling. Requires standalone
+                build.
+              </p>
+            </div>
+            <div
+              className={`relative rounded-lg border-2 p-4 cursor-pointer transition-colors ${
+                settings.map_provider === "expo"
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-muted-foreground/30"
+              }`}
+              onClick={() => updateField("map_provider", "expo")}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-6 w-6 rounded bg-green-500 flex items-center justify-center">
+                  <span className="text-white text-[10px] font-bold">EX</span>
+                </div>
+                <span className="text-sm font-medium">Expo Maps</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Works with Expo Go. Uses native Apple/Google maps.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Enable Mapbox</Label>
+            <Switch
+              checked={!!settings.mapbox_enabled}
+              onCheckedChange={(v) => updateField("mapbox_enabled", v)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Enable Expo Maps</Label>
+            <Switch
+              checked={!!settings.expo_maps_enabled}
+              onCheckedChange={(v) => updateField("expo_maps_enabled", v)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ride & Booking Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <ToggleLeft className="h-4 w-4" />
+            Ride & Booking
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Control ride and booking behavior across the platform
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-xs">Fare Per Seat</Label>
+              <p className="text-[10px] text-muted-foreground">
+                Multiply fare by number of seats booked
+              </p>
+            </div>
+            <Switch
+              checked={!!settings.fare_per_seat}
+              onCheckedChange={(v) => updateField("fare_per_seat", v)}
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-xs">Auto Accept Bookings</Label>
+              <p className="text-[10px] text-muted-foreground">
+                Automatically accept ride requests
+              </p>
+            </div>
+            <Switch
+              checked={!!settings.auto_accept_bookings}
+              onCheckedChange={(v) => updateField("auto_accept_bookings", v)}
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-xs">Allow Ride Without Driver</Label>
+              <p className="text-[10px] text-muted-foreground">
+                Let users create rides without assigned driver
+              </p>
+            </div>
+            <Switch
+              checked={!!settings.allow_ride_without_driver}
+              onCheckedChange={(v) =>
+                updateField("allow_ride_without_driver", v)
+              }
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-xs">Max Seats Per Booking</Label>
+              <p className="text-[10px] text-muted-foreground">
+                Maximum seats a user can book at once
+              </p>
+            </div>
+            <Input
+              type="number"
+              min={1}
+              max={10}
+              className="w-20 h-8 text-xs"
+              value={settings.max_seats_per_booking as number}
+              onChange={(e) =>
+                updateField(
+                  "max_seats_per_booking",
+                  parseInt(e.target.value) || 1,
+                )
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* System */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            System
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Maintenance and version controls
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-xs">Maintenance Mode</Label>
+              <p className="text-[10px] text-muted-foreground">
+                Disable the platform for maintenance
+              </p>
+            </div>
+            <Switch
+              checked={!!settings.maintenance_mode}
+              onCheckedChange={(v) => updateField("maintenance_mode", v)}
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-xs">Minimum App Version</Label>
+              <p className="text-[10px] text-muted-foreground">
+                Force users to update below this version
+              </p>
+            </div>
+            <Input
+              type="text"
+              className="w-24 h-8 text-xs"
+              value={(settings.app_version_minimum as string) ?? ""}
+              onChange={(e) =>
+                updateField("app_version_minimum", e.target.value)
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button onClick={handleSave} disabled={saving} size="sm">
+        {saving ? (
+          <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+        ) : (
+          <Save className="h-4 w-4 mr-1.5" />
+        )}
+        <span className="text-xs">Save Platform Settings</span>
+      </Button>
+    </div>
+  );
+}
+
 /* ─── Settings Page ─── */
 export default function SettingsPage() {
   const { user } = useAuthStore();
@@ -998,6 +1275,10 @@ export default function SettingsPage() {
                 <Globe className="h-3.5 w-3.5" />
                 Languages
               </TabsTrigger>
+              <TabsTrigger value="platform" className="text-xs">
+                <ToggleLeft className="h-3.5 w-3.5" />
+                Platform
+              </TabsTrigger>
             </>
           )}
         </TabsList>
@@ -1021,6 +1302,9 @@ export default function SettingsPage() {
             </TabsContent>
             <TabsContent value="languages">
               <LanguagesTab />
+            </TabsContent>
+            <TabsContent value="platform">
+              <PlatformTab />
             </TabsContent>
           </>
         )}

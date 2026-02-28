@@ -5,7 +5,7 @@ import {
   ClipboardListIcon,
   FileTextIcon,
   FlagIcon,
-  BellIcon,
+  MapPinIcon,
 } from "lucide-react";
 import type { DashboardData } from "@/store/useDashboardStore";
 
@@ -20,7 +20,7 @@ export function SecondaryStats({
   support_tickets,
   driver_applications,
 }: SecondaryStatsProps) {
-  const approvalRate = parseFloat(driver_applications.approval_rate) || 0;
+  const approvalRate = Number(driver_applications.approval_rate) || 0;
 
   return (
     <div className="grid grid-cols-2 gap-4 px-4 lg:px-6 @xl/main:grid-cols-4">
@@ -73,17 +73,16 @@ export function SecondaryStats({
 
       <Card>
         <CardContent className="flex flex-col items-center justify-center p-4 gap-1">
-          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-            <BellIcon className="h-4 w-4 text-primary" />
+          <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center mb-1">
+            <MapPinIcon className="h-4 w-4 text-green-500" />
           </div>
           <span className="text-xl font-bold tabular-nums">
-            {o.unread_notifications}
+            {o.total_locations ?? 0}
           </span>
+          <p className="text-[10px] text-muted-foreground">Campus Locations</p>
           <p className="text-[10px] text-muted-foreground">
-            Unread Notifications
-          </p>
-          <p className="text-[10px] text-muted-foreground">
-            {o.total_admins} admins · {o.super_admins} super
+            {o.active_locations ?? 0} active · {o.popular_locations ?? 0}{" "}
+            popular
           </p>
         </CardContent>
       </Card>

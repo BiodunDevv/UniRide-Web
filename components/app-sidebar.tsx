@@ -30,6 +30,8 @@ import {
   SettingsIcon,
   CircleHelpIcon,
   BellIcon,
+  MapIcon,
+  MapPinIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -68,6 +70,16 @@ const navMain = [
     title: "Bookings",
     url: "/dashboard/bookings",
     icon: <FileTextIcon />,
+  },
+  {
+    title: "Locations",
+    url: "/dashboard/locations",
+    icon: <MapPinIcon />,
+  },
+  {
+    title: "Live Map",
+    url: "/dashboard/map",
+    icon: <MapIcon />,
   },
   {
     title: "Broadcast",

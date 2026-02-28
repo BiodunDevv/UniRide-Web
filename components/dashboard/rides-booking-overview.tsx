@@ -25,7 +25,7 @@ interface RidesBookingOverviewProps {
 export function RidesBookingOverview({
   overview: o,
 }: RidesBookingOverviewProps) {
-  const rideCompletionRate = parseFloat(o.ride_completion_rate) || 0;
+  const rideCompletionRate = Number(o.ride_completion_rate) || 0;
 
   return (
     <div className="grid gap-4 px-4 lg:px-6 @xl/main:grid-cols-2">

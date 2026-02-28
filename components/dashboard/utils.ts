@@ -12,8 +12,8 @@ export const formatNumber = (value: number) => {
   return value.toLocaleString();
 };
 
-export const parseGrowth = (val: string) => {
-  const num = parseFloat(val);
+export const parseGrowth = (val: number | string) => {
+  const num = typeof val === "number" ? val : parseFloat(val);
   return { value: isNaN(num) ? 0 : num, isPositive: !isNaN(num) && num >= 0 };
 };
 

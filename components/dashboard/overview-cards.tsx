@@ -29,7 +29,10 @@ export function OverviewCards({ overview: o }: OverviewCardsProps) {
   const userGrowth = parseGrowth(o.user_growth_percentage);
   const driverGrowth = parseGrowth(o.driver_growth_percentage);
   const revenueGrowth = parseGrowth(o.revenue_growth_percentage);
-  const rideCompletionRate = parseFloat(o.ride_completion_rate) || 0;
+  const rideCompletionRate =
+    typeof o.ride_completion_rate === "number"
+      ? o.ride_completion_rate
+      : parseFloat(String(o.ride_completion_rate)) || 0;
 
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
@@ -58,7 +61,8 @@ export function OverviewCards({ overview: o }: OverviewCardsProps) {
             </span>
           </div>
           <div className="text-muted-foreground">
-            {o.in_progress_rides} ride{o.in_progress_rides !== 1 ? "s" : ""} in progress
+            {o.in_progress_rides} ride{o.in_progress_rides !== 1 ? "s" : ""} in
+            progress
           </div>
         </CardFooter>
       </Card>
@@ -75,7 +79,11 @@ export function OverviewCards({ overview: o }: OverviewCardsProps) {
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {driverGrowth.isPositive ? <TrendingUpIcon /> : <TrendingDownIcon />}
+              {driverGrowth.isPositive ? (
+                <TrendingUpIcon />
+              ) : (
+                <TrendingDownIcon />
+              )}
               {driverGrowth.isPositive ? "+" : ""}
               {driverGrowth.value.toFixed(1)}%
             </Badge>
@@ -108,7 +116,11 @@ export function OverviewCards({ overview: o }: OverviewCardsProps) {
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {userGrowth.isPositive ? <TrendingUpIcon /> : <TrendingDownIcon />}
+              {userGrowth.isPositive ? (
+                <TrendingUpIcon />
+              ) : (
+                <TrendingDownIcon />
+              )}
               {userGrowth.isPositive ? "+" : ""}
               {userGrowth.value.toFixed(1)}%
             </Badge>
@@ -141,7 +153,11 @@ export function OverviewCards({ overview: o }: OverviewCardsProps) {
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {revenueGrowth.isPositive ? <TrendingUpIcon /> : <TrendingDownIcon />}
+              {revenueGrowth.isPositive ? (
+                <TrendingUpIcon />
+              ) : (
+                <TrendingDownIcon />
+              )}
               {revenueGrowth.isPositive ? "+" : ""}
               {revenueGrowth.value.toFixed(1)}%
             </Badge>
@@ -156,7 +172,11 @@ export function OverviewCards({ overview: o }: OverviewCardsProps) {
               <TrendingDownIcon className="size-4" />
             )}
           </div>
-          <div className="text-muted-foreground">Compared to previous period</div>
+          <div className="text-muted-foreground">
+            {o.total_seats_booked > 0
+              ? `${formatRevenue(o.avg_fare_per_seat)}/seat · ${formatNumber(o.total_seats_booked)} seats`
+              : "Compared to previous period"}
+          </div>
         </CardFooter>
       </Card>
     </div>

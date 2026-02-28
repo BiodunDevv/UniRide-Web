@@ -10,29 +10,39 @@ interface Overview {
   active_users: number;
   flagged_users: number;
   new_users_this_period: number;
-  user_growth_percentage: string;
+  user_growth_percentage: number;
   total_drivers: number;
   active_drivers: number;
   inactive_drivers: number;
   flagged_drivers: number;
   new_drivers_this_period: number;
-  driver_growth_percentage: string;
+  driver_growth_percentage: number;
   total_rides: number;
   completed_rides: number;
   cancelled_rides: number;
   in_progress_rides: number;
-  ride_completion_rate: string;
+  ride_completion_rate: number;
   total_bookings: number;
   completed_bookings: number;
   cancelled_bookings: number;
   active_bookings: number;
-  total_revenue: string;
-  revenue_growth_percentage: string;
+  booking_growth_percentage: number;
+  total_revenue: number;
+  revenue_growth_percentage: number;
+  avg_revenue_per_day: number;
+  total_seats_booked: number;
+  total_seat_revenue: number;
+  avg_fare_per_seat: number;
   pending_applications: number;
   total_admins: number;
   super_admins: number;
   unread_notifications: number;
-  average_rating: string;
+  average_rating: number;
+  total_rated_rides: number;
+  total_locations: number;
+  active_locations: number;
+  popular_locations: number;
+  check_in_rate: number;
 }
 
 interface ChartDataItem {
@@ -49,6 +59,17 @@ interface ChartDataItem {
   priority?: string;
   category?: string;
   type?: string;
+}
+
+interface PeakHourItem {
+  hour: number;
+  rides: number;
+}
+
+interface TopRouteItem {
+  pickup_name: string;
+  dropoff_name: string;
+  count: number;
 }
 
 interface SupportTickets {
@@ -68,7 +89,7 @@ interface DriverApplications {
   pending: number;
   approved_this_period: number;
   rejected_this_period: number;
-  approval_rate: string;
+  approval_rate: number;
 }
 
 interface PeriodInfo {
@@ -81,6 +102,7 @@ interface PeriodInfo {
 export interface DashboardData {
   overview: Overview;
   user_growth_chart: ChartDataItem[];
+  rides_per_day_chart: ChartDataItem[];
   ride_status_chart: ChartDataItem[];
   booking_status_chart: ChartDataItem[];
   revenue_chart: ChartDataItem[];
@@ -88,6 +110,8 @@ export interface DashboardData {
   payment_method_chart: ChartDataItem[];
   fare_source_chart: ChartDataItem[];
   rating_distribution_chart: ChartDataItem[];
+  peak_hours_chart: PeakHourItem[];
+  top_routes: TopRouteItem[];
   support_tickets: SupportTickets;
   notifications: Notifications;
   driver_applications: DriverApplications;

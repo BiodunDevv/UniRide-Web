@@ -19,6 +19,9 @@ import {
   PlatformSummary,
   UserGrowthChart,
   RevenueChart,
+  PeakHoursChart,
+  TopRoutes,
+  RidesPerDayChart,
   periodLabels,
 } from "@/components/dashboard";
 
@@ -95,10 +98,16 @@ export default function DashboardPage() {
           {/* Primary stat cards */}
           <OverviewCards overview={data.overview} />
 
-          {/* Charts row */}
+          {/* Charts row 1: User growth & Revenue */}
           <div className="grid gap-4 px-4 lg:px-6 @xl/main:grid-cols-2">
             <UserGrowthChart data={data.user_growth_chart} />
             <RevenueChart data={data.revenue_chart} />
+          </div>
+
+          {/* Charts row 2: Rides per day & Peak hours */}
+          <div className="grid gap-4 px-4 lg:px-6 @xl/main:grid-cols-2">
+            <RidesPerDayChart data={data.rides_per_day_chart} />
+            <PeakHoursChart data={data.peak_hours_chart} />
           </div>
 
           {/* Secondary stat mini-cards */}
@@ -111,8 +120,9 @@ export default function DashboardPage() {
           {/* Rides & Booking breakdown */}
           <RidesBookingOverview overview={data.overview} />
 
-          {/* Support & Applications */}
+          {/* Top Routes & Support & Applications */}
           <div className="grid gap-4 px-4 lg:px-6 @xl/main:grid-cols-3">
+            <TopRoutes data={data.top_routes} />
             <SupportSummary support_tickets={data.support_tickets} />
             <ApplicationsSummary
               driver_applications={data.driver_applications}

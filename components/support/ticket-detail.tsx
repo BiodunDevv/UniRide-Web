@@ -80,6 +80,7 @@ export function TicketDetail({
   const isAssignedToMe = ticket.assigned_to?._id === currentUserId;
   const isSuperAdmin = currentUserRole === "super_admin";
   const isAdmin = currentUserRole === "admin" || isSuperAdmin;
+  const isOwner = ticket.user_id?._id === currentUserId;
   const isClosed = ticket.status === "closed";
   const isResolved = ticket.status === "resolved";
 

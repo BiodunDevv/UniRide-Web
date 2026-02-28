@@ -18,7 +18,7 @@ interface ApplicationsSummaryProps {
 export function ApplicationsSummary({
   driver_applications,
 }: ApplicationsSummaryProps) {
-  const approvalRate = parseFloat(driver_applications.approval_rate) || 0;
+  const approvalRate = Number(driver_applications.approval_rate) || 0;
 
   return (
     <Card>
