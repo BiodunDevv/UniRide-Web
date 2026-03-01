@@ -92,6 +92,18 @@ export function TicketsTable({
   const columns = React.useMemo<ColumnDef<Ticket>[]>(
     () => [
       {
+        id: "row_number",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground font-medium tabular-nums">
+            {row.index + 1}
+          </span>
+        ),
+        size: 40,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
         accessorKey: "id",
         header: "Ticket",
         cell: ({ row }) => (

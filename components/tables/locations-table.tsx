@@ -90,6 +90,18 @@ export function LocationsTable({
   const columns = React.useMemo<ColumnDef<CampusLocation>[]>(
     () => [
       {
+        id: "row_number",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground font-medium tabular-nums">
+            {row.index + 1}
+          </span>
+        ),
+        size: 40,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
         accessorKey: "name",
         header: "Name",
         cell: ({ row }) => (

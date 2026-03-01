@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DollarSign, Save, Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/shared";
 import { useAdminStore } from "@/store/useAdminStore";
 
 export default function FarePolicyPage() {
@@ -86,22 +87,20 @@ export default function FarePolicyPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Fare Policy</h2>
-          <p className="text-xs text-muted-foreground">
-            Configure pricing and fare rules
-          </p>
-        </div>
-        <Button size="sm" onClick={handleSave} disabled={saving}>
-          {saving ? (
-            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4 mr-1.5" />
-          )}
-          <span className="text-xs">Save Changes</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Fare Policy"
+        description="Configure pricing and fare rules"
+        actions={
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-1.5" />
+            )}
+            <span className="text-xs">Save Changes</span>
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>

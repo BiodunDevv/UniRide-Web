@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAdminStore } from "@/store/useAdminStore";
-import type { User } from "@/store/useAdminStore";
+import type { User, AdminBooking } from "@/store/useAdminStore";
 import { DeleteConfirmModal } from "@/components/modals/delete-confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { LoadingState } from "@/components/shared";
+import { LoadingState, StatsCard } from "@/components/shared";
 import {
   ArrowLeft,
   Mail,
@@ -30,9 +30,28 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  FileText,
+  CalendarDays,
+  CreditCard,
+  Armchair,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ProfileAvatar } from "@/components/shared/profile-avatar";
+
+function getLocationName(loc: any): string {
+  if (!loc) return "—";
+  if (typeof loc === "string") return loc;
+  return loc.short_name || loc.name || "—";
+}
+
+const bookingStatusStyles: Record<string, string> = {
+  pending: "bg-amber-50 text-amber-700 border-amber-200",
+  accepted: "bg-blue-50 text-blue-700 border-blue-200",
+  declined: "bg-red-50 text-red-700 border-red-200",
+  in_progress: "bg-purple-50 text-purple-700 border-purple-200",
+  completed: "bg-green-50 text-green-700 border-green-200",
+  cancelled: "bg-gray-50 text-gray-600 border-gray-200",
+};
 
 export default function UserDetailPage({
   params,
@@ -41,7 +60,8 @@ export default function UserDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { getUserById, flagUser, deleteUser } = useAdminStore();
+  const { getUserById, flagUser, deleteUser, getUserBookingHistory } =
+    useAdminStore();
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,6 +69,8 @@ export default function UserDetailPage({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [flagLoading, setFlagLoading] = useState(false);
+  const [bookingHistory, setBookingHistory] = useState<AdminBooking[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const fetchUser = async () => {
     try {
@@ -66,6 +88,16 @@ export default function UserDetailPage({
   useEffect(() => {
     fetchUser();
   }, [id]);
+
+  useEffect(() => {
+    if (user) {
+      setHistoryLoading(true);
+      getUserBookingHistory(user._id)
+        .then(setBookingHistory)
+        .catch(() => {})
+        .finally(() => setHistoryLoading(false));
+    }
+  }, [user?._id]);
 
   const handleFlag = async () => {
     if (!user) return;
@@ -125,6 +157,14 @@ export default function UserDetailPage({
       </div>
     );
   }
+
+  const completedBookings = bookingHistory.filter(
+    (b) => b.status === "completed",
+  );
+  const totalSpent = bookingHistory.reduce(
+    (sum, b) => sum + (b.total_fare || 0),
+    0,
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
@@ -193,7 +233,7 @@ export default function UserDetailPage({
         </div>
       </div>
 
-      {/* Status banner */}
+      {/* Flagged banner */}
       {user.is_flagged && (
         <div className="flex items-center gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
@@ -224,7 +264,37 @@ export default function UserDetailPage({
         </div>
       )}
 
-      {/* Detail cards */}
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatsCard
+          icon={FileText}
+          value={bookingHistory.length}
+          label="Total Bookings"
+        />
+        <StatsCard
+          icon={CheckCircle}
+          iconColor="text-green-500"
+          value={completedBookings.length}
+          label="Completed"
+        />
+        <StatsCard
+          icon={CreditCard}
+          iconColor="text-[#D4A017]"
+          value={`₦${totalSpent.toLocaleString()}`}
+          label="Total Spent"
+        />
+        <StatsCard
+          icon={Calendar}
+          iconColor="text-blue-500"
+          value={new Date(user.createdAt).toLocaleDateString("en-NG", {
+            month: "short",
+            year: "numeric",
+          })}
+          label="Member Since"
+        />
+      </div>
+
+      {/* Detail Cards */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Account Information */}
         <Card>
@@ -364,6 +434,118 @@ export default function UserDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Booking History */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                Booking History
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Recent ride bookings made by this user
+              </CardDescription>
+            </div>
+            {bookingHistory.length > 0 && (
+              <Badge variant="secondary" className="text-[10px]">
+                {bookingHistory.length} booking
+                {bookingHistory.length !== 1 ? "s" : ""}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {historyLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-xs text-muted-foreground">
+                Loading booking history…
+              </span>
+            </div>
+          ) : bookingHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <FileText className="h-8 w-8 text-muted-foreground/40 mb-2" />
+              <p className="text-xs text-muted-foreground">
+                No bookings found for this user
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {bookingHistory.map((booking) => {
+                const ride = booking.ride_id;
+                const pickup =
+                  ride && typeof ride === "object"
+                    ? getLocationName(ride.pickup_location_id)
+                    : "—";
+                const dest =
+                  ride && typeof ride === "object"
+                    ? getLocationName(ride.destination_id)
+                    : "—";
+                const style =
+                  bookingStatusStyles[booking.status] ||
+                  bookingStatusStyles.cancelled;
+
+                return (
+                  <div
+                    key={booking._id}
+                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                        <div className="w-px h-3 bg-border" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="truncate font-medium">{pickup}</span>
+                          <span className="text-muted-foreground shrink-0">
+                            →
+                          </span>
+                          <span className="truncate font-medium">{dest}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
+                          <span className="flex items-center gap-0.5">
+                            <CalendarDays className="h-2.5 w-2.5" />
+                            {new Date(
+                              booking.booking_time || booking.createdAt,
+                            ).toLocaleDateString("en-NG", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span className="flex items-center gap-0.5">
+                            <Armchair className="h-2.5 w-2.5" />
+                            {booking.seats_requested} seat
+                            {booking.seats_requested > 1 ? "s" : ""}
+                          </span>
+                          <span className="flex items-center gap-0.5">
+                            <CreditCard className="h-2.5 w-2.5" />
+                            {booking.payment_method}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 ml-3">
+                      <span className="text-xs font-bold">
+                        ₦{booking.total_fare?.toLocaleString() || "0"}
+                      </span>
+                      <span
+                        className={`text-[10px] font-medium px-2 py-0.5 rounded-full border capitalize ${style}`}
+                      >
+                        {booking.status.replace("_", " ")}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Delete Modal */}
       <DeleteConfirmModal

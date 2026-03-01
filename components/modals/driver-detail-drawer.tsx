@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -28,8 +29,15 @@ import {
   Flag,
   FlagOff,
   ShieldAlert,
+  Route,
+  Loader2,
+  CalendarDays,
 } from "lucide-react";
-import type { Driver } from "@/store/useAdminStore";
+import {
+  useAdminStore,
+  type Driver,
+  type AdminRide,
+} from "@/store/useAdminStore";
 
 interface DriverDetailDrawerProps {
   driver: Driver;
@@ -37,15 +45,53 @@ interface DriverDetailDrawerProps {
   onDelete?: () => void;
 }
 
+function getLocationName(loc: any): string {
+  if (!loc) return "—";
+  if (typeof loc === "string") return loc;
+  return loc.short_name || loc.name || "—";
+}
+
+const rideStatusStyles: Record<string, string> = {
+  scheduled: "bg-blue-50 text-blue-700 border-blue-200",
+  available: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  accepted: "bg-sky-50 text-sky-700 border-sky-200",
+  in_progress: "bg-purple-50 text-purple-700 border-purple-200",
+  completed: "bg-green-50 text-green-700 border-green-200",
+  cancelled: "bg-gray-50 text-gray-600 border-gray-200",
+};
+
 export function DriverDetailDrawer({
   driver,
   onFlag,
   onDelete,
 }: DriverDetailDrawerProps) {
   const isMobile = useIsMobile();
+  const [rideHistory, setRideHistory] = useState<AdminRide[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && !historyLoaded) {
+      setHistoryLoading(true);
+      useAdminStore
+        .getState()
+        .getDriverRideHistory(driver._id)
+        .then((rides) => {
+          setRideHistory(rides);
+          setHistoryLoaded(true);
+        })
+        .catch(() => {})
+        .finally(() => setHistoryLoading(false));
+    }
+  }, [open, historyLoaded, driver._id]);
 
   return (
-    <Drawer direction={isMobile ? "bottom" : "right"}>
+    <Drawer
+      direction={isMobile ? "bottom" : "right"}
+      open={open}
+      onOpenChange={setOpen}
+    >
       <DrawerTrigger asChild>
         <Button
           variant="link"
@@ -58,7 +104,7 @@ export function DriverDetailDrawer({
         <DrawerHeader>
           <DrawerTitle className="text-sm">Driver Profile</DrawerTitle>
           <DrawerDescription className="text-xs">
-            View driver details and statistics
+            View driver details and ride history
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto px-4 py-2 text-sm">
@@ -181,6 +227,78 @@ export function DriverDetailDrawer({
                 <p className="text-xs text-foreground leading-relaxed">
                   {driver.vehicle_description}
                 </p>
+              </div>
+            )}
+          </div>
+
+          {/* Ride History Section */}
+          <Separator />
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Route className="h-3.5 w-3.5 text-[#042F40]" />
+              <p className="text-xs font-semibold text-[#042F40]">
+                Recent Rides
+              </p>
+              {rideHistory.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] ml-auto">
+                  {rideHistory.length}
+                </Badge>
+              )}
+            </div>
+            {historyLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-xs text-muted-foreground">
+                  Loading rides…
+                </span>
+              </div>
+            ) : rideHistory.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                No ride history found
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-50 overflow-y-auto">
+                {rideHistory.slice(0, 10).map((ride) => {
+                  const pickup = getLocationName(ride.pickup_location_id);
+                  const dest = getLocationName(ride.destination_id);
+                  const style =
+                    rideStatusStyles[ride.status] || rideStatusStyles.cancelled;
+                  return (
+                    <div
+                      key={ride._id}
+                      className="rounded-lg border p-2.5 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-xs min-w-0 flex-1">
+                          <div className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
+                          <span className="truncate max-w-20">{pickup}</span>
+                          <span className="text-muted-foreground">→</span>
+                          <span className="truncate max-w-20">{dest}</span>
+                        </div>
+                        <span
+                          className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${style}`}
+                        >
+                          {ride.status.replace("_", " ")}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <CalendarDays className="h-2.5 w-2.5" />
+                          {new Date(ride.departure_time).toLocaleDateString(
+                            "en-NG",
+                            {
+                              month: "short",
+                              day: "numeric",
+                            },
+                          )}
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          ₦{ride.fare?.toLocaleString() || "0"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -72,6 +72,11 @@ const navMain = [
     icon: <FileTextIcon />,
   },
   {
+    title: "Rides",
+    url: "/dashboard/rides",
+    icon: <CarIcon />,
+  },
+  {
     title: "Locations",
     url: "/dashboard/locations",
     icon: <MapPinIcon />,

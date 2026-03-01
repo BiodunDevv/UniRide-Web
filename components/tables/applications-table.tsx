@@ -74,6 +74,18 @@ export function ApplicationsTable({
   const columns = React.useMemo<ColumnDef<DriverApplication>[]>(
     () => [
       {
+        id: "row_number",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground font-medium tabular-nums">
+            {row.index + 1}
+          </span>
+        ),
+        size: 40,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
         accessorKey: "full_name",
         header: "Applicant",
         cell: ({ row }) => (

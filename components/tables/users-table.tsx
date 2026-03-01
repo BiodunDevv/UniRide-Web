@@ -53,6 +53,7 @@ import {
   Loader2,
   ShieldAlert,
   CheckCircle,
+  FileText,
 } from "lucide-react";
 import type { User } from "@/store/useAdminStore";
 import { ProfileAvatar } from "@/components/shared/profile-avatar";
@@ -74,6 +75,18 @@ export function UsersTable({
 
   const columns = React.useMemo<ColumnDef<User>[]>(
     () => [
+      {
+        id: "row_number",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground font-medium tabular-nums">
+            {row.index + 1}
+          </span>
+        ),
+        size: 40,
+        enableSorting: false,
+        enableHiding: false,
+      },
       {
         accessorKey: "name",
         header: "User",
@@ -155,6 +168,12 @@ export function UsersTable({
                 <Link href={`/dashboard/users/${row.original._id}`}>
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                   View Details
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/bookings?user_id=${row.original._id}`}>
+                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                  Booking History
                 </Link>
               </DropdownMenuItem>
               {onFlag &&

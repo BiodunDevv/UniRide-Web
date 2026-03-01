@@ -53,6 +53,7 @@ import {
   ChevronsRightIcon,
   Loader2,
   ShieldAlert,
+  Route,
 } from "lucide-react";
 import type { Driver } from "@/store/useAdminStore";
 import { ProfileAvatar } from "@/components/shared/profile-avatar";
@@ -75,6 +76,18 @@ export function DriversTable({
 
   const columns = React.useMemo<ColumnDef<Driver>[]>(
     () => [
+      {
+        id: "row_number",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground font-medium tabular-nums">
+            {row.index + 1}
+          </span>
+        ),
+        size: 40,
+        enableSorting: false,
+        enableHiding: false,
+      },
       {
         accessorFn: (row) => row.user_id?.name ?? "Unknown",
         id: "name",
@@ -196,6 +209,12 @@ export function DriversTable({
                 <Link href={`/dashboard/drivers/${row.original._id}`}>
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                   View Details
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/rides?driver_id=${row.original._id}`}>
+                  <Route className="h-3.5 w-3.5 mr-1.5" />
+                  Ride History
                 </Link>
               </DropdownMenuItem>
               {onFlag &&

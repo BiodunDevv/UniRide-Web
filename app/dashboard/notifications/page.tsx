@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PageHeader } from "@/components/shared";
 import {
   BellOff,
   CheckCheck,
@@ -141,26 +142,14 @@ export default function NotificationsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold">Notifications</h2>
-          <p className="text-xs text-muted-foreground">
-            {unreadCount > 0 ? (
-              <>
-                <span className="font-medium text-foreground">
-                  {unreadCount}
-                </span>{" "}
-                unread notification{unreadCount !== 1 ? "s" : ""}
-              </>
-            ) : (
-              "No unread notifications"
-            )}
-            {pagination && (
-              <span className="ml-1.5 text-muted-foreground/60">
-                · {pagination.total} total
-              </span>
-            )}
-          </p>
-        </div>
+        <PageHeader
+          title="Notifications"
+          description={
+            unreadCount > 0
+              ? `${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}${pagination ? ` · ${pagination.total} total` : ""}`
+              : `No unread notifications${pagination ? ` · ${pagination.total} total` : ""}`
+          }
+        />
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* Refresh */}

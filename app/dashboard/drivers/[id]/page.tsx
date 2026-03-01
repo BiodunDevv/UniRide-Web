@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAdminStore } from "@/store/useAdminStore";
-import type { Driver } from "@/store/useAdminStore";
+import type { Driver, AdminRide } from "@/store/useAdminStore";
 import { DeleteConfirmModal } from "@/components/modals/delete-confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,9 @@ import {
   Banknote,
   CreditCard,
   Building2,
+  MapPin,
+  Navigation,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -70,6 +73,7 @@ export default function DriverDetailPage({
     flagUser,
     adminUpdateDriver,
     resetDriverLicense,
+    getDriverRideHistory,
   } = useAdminStore();
 
   const [driver, setDriver] = useState<Driver | null>(null);
@@ -81,6 +85,8 @@ export default function DriverDetailPage({
   const [flagLoading, setFlagLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [resetLicenseLoading, setResetLicenseLoading] = useState(false);
+  const [rideHistory, setRideHistory] = useState<AdminRide[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -112,6 +118,23 @@ export default function DriverDetailPage({
     };
     fetchDriver();
   }, [id, getDriverById]);
+
+  // Fetch ride history when driver is loaded
+  useEffect(() => {
+    if (!driver?._id) return;
+    const fetchHistory = async () => {
+      setHistoryLoading(true);
+      try {
+        const rides = await getDriverRideHistory(driver._id);
+        setRideHistory(rides);
+      } catch {
+        // silent fail
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [driver?._id, getDriverRideHistory]);
 
   const handleDelete = async (forceDelete: boolean) => {
     if (!driver) return;
@@ -829,6 +852,119 @@ export default function DriverDetailPage({
           </CardContent>
         </Card>
       )}
+
+      {/* Ride History */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Navigation className="h-4 w-4 text-primary" />
+              Ride History
+            </CardTitle>
+            <Badge variant="secondary" className="text-[10px]">
+              {rideHistory.length} ride{rideHistory.length !== 1 ? "s" : ""}
+            </Badge>
+          </div>
+          <CardDescription className="text-xs">
+            Recent rides created by this driver
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {historyLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          ) : rideHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Navigation className="h-8 w-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">No rides found</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {rideHistory.map((ride) => {
+                const pickup =
+                  typeof ride.pickup_location_id === "object" &&
+                  ride.pickup_location_id
+                    ? ride.pickup_location_id.name ||
+                      ride.pickup_location_id.address ||
+                      "Unknown"
+                    : "Unknown";
+                const dest =
+                  typeof ride.destination_id === "object" && ride.destination_id
+                    ? ride.destination_id.name ||
+                      ride.destination_id.address ||
+                      "Unknown"
+                    : "Unknown";
+
+                const statusStyles: Record<string, string> = {
+                  scheduled: "bg-blue-50 text-blue-700 border-blue-200",
+                  available: "bg-cyan-50 text-cyan-700 border-cyan-200",
+                  accepted: "bg-indigo-50 text-indigo-700 border-indigo-200",
+                  in_progress: "bg-amber-50 text-amber-700 border-amber-200",
+                  completed: "bg-green-50 text-green-700 border-green-200",
+                  cancelled: "bg-red-50 text-red-700 border-red-200",
+                };
+
+                return (
+                  <div
+                    key={ride._id}
+                    className="flex items-start gap-3 rounded-lg border p-3 hover:bg-muted/30 transition-colors"
+                  >
+                    {/* Route visualization */}
+                    <div className="flex flex-col items-center gap-0.5 pt-0.5 shrink-0">
+                      <div className="h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-green-500/20" />
+                      <div className="w-px h-6 bg-border" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-red-500/20" />
+                    </div>
+
+                    {/* Route details */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-3 w-3 text-green-600 shrink-0" />
+                        <span className="text-xs truncate">{pickup}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-3 w-3 text-red-600 shrink-0" />
+                        <span className="text-xs truncate">{dest}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground pt-0.5">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5" />
+                          {new Date(ride.departure_time).toLocaleDateString(
+                            "en-NG",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="h-2.5 w-2.5" />
+                          {ride.booked_seats}/{ride.available_seats} seats
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Fare + status */}
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <span className="text-xs font-semibold">
+                        ₦{ride.fare?.toLocaleString() ?? "0"}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] capitalize ${statusStyles[ride.status] || ""}`}
+                      >
+                        {ride.status?.replace("_", " ")}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Edit Driver Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>

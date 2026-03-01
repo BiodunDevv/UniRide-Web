@@ -16,6 +16,7 @@ import {
   PageHeader,
   StatsCard,
   SearchInput,
+  StatusFilter,
   LoadingState,
 } from "@/components/shared";
 import { MapPin, Star, Eye, EyeOff, Plus } from "lucide-react";
@@ -159,21 +160,22 @@ export default function LocationsPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <select
+              <StatusFilter
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-              >
-                <option value="all">All Categories</option>
-                <option value="academic">Academic</option>
-                <option value="hostel">Hostel</option>
-                <option value="cafeteria">Cafeteria</option>
-                <option value="admin_building">Admin Building</option>
-                <option value="religious">Religious</option>
-                <option value="library">Library</option>
-                <option value="market">Market</option>
-                <option value="other">Other</option>
-              </select>
+                onChange={setCategoryFilter}
+                options={[
+                  { value: "all", label: "All Categories" },
+                  { value: "academic", label: "Academic" },
+                  { value: "hostel", label: "Hostel" },
+                  { value: "cafeteria", label: "Cafeteria" },
+                  { value: "admin_building", label: "Admin Building" },
+                  { value: "religious", label: "Religious" },
+                  { value: "library", label: "Library" },
+                  { value: "market", label: "Market" },
+                  { value: "other", label: "Other" },
+                ]}
+                placeholder="Category"
+              />
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}

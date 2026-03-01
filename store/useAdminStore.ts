@@ -129,6 +129,56 @@ export interface BroadcastMessage {
   updatedAt: string;
 }
 
+export interface AdminRide {
+  _id: string;
+  created_by: any;
+  driver_id: any;
+  pickup_location_id: any;
+  destination_id: any;
+  fare: number;
+  fare_policy_source: "admin" | "driver" | "distance_auto";
+  departure_time: string;
+  available_seats: number;
+  booked_seats: number;
+  status:
+    | "scheduled"
+    | "available"
+    | "accepted"
+    | "in_progress"
+    | "completed"
+    | "cancelled";
+  check_in_code: string;
+  distance_meters?: number;
+  duration_seconds?: number;
+  ended_at?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminBooking {
+  _id: string;
+  ride_id: any;
+  user_id: any;
+  seats_requested: number;
+  total_fare: number;
+  payment_method: "cash" | "transfer";
+  payment_status: "pending" | "paid" | "not_applicable";
+  booking_time: string;
+  check_in_status: "not_checked_in" | "checked_in";
+  status:
+    | "pending"
+    | "accepted"
+    | "declined"
+    | "in_progress"
+    | "completed"
+    | "cancelled";
+  rating?: number;
+  feedback?: string;
+  admin_note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AdminState {
   applications: DriverApplication[];
   drivers: Driver[];
@@ -136,6 +186,10 @@ interface AdminState {
   admins: Admin[];
   farePolicy: FarePolicy | null;
   broadcasts: BroadcastMessage[];
+  rides: AdminRide[];
+  ridesTotalCount: number;
+  bookings: AdminBooking[];
+  bookingsTotalCount: number;
   isLoading: boolean;
   error: string | null;
 
@@ -168,6 +222,26 @@ interface AdminState {
     notification_type?: "push" | "email" | "both",
   ) => Promise<void>;
   getBroadcastHistory: (limit?: number) => Promise<void>;
+  // Rides
+  getAllRides: (params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => Promise<void>;
+  updateRide: (id: string, updates: Record<string, any>) => Promise<void>;
+  cancelRide: (id: string) => Promise<void>;
+  // Bookings
+  getAllBookings: (params?: {
+    status?: string;
+    ride_id?: string;
+    page?: number;
+    limit?: number;
+  }) => Promise<void>;
+  acceptBooking: (id: string, admin_note?: string) => Promise<void>;
+  declineBooking: (id: string, admin_note?: string) => Promise<void>;
+  // History
+  getDriverRideHistory: (driverId: string) => Promise<AdminRide[]>;
+  getUserBookingHistory: (userId: string) => Promise<AdminBooking[]>;
   clearError: () => void;
 }
 
@@ -178,6 +252,10 @@ export const useAdminStore = create<AdminState>((set) => ({
   admins: [],
   farePolicy: null,
   broadcasts: [],
+  rides: [],
+  ridesTotalCount: 0,
+  bookings: [],
+  bookingsTotalCount: 0,
   isLoading: false,
   error: null,
 
@@ -1029,6 +1107,231 @@ export const useAdminStore = create<AdminState>((set) => ({
         isLoading: false,
       });
       throw error;
+    }
+  },
+
+  // ── Rides Management ──────────────────────────────────────────────
+  getAllRides: async (params) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const qs = new URLSearchParams();
+      if (params?.status) qs.set("status", params.status);
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+
+      const response = await fetch(`${API_URL}/api/rides/all?${qs}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to fetch rides");
+
+      set({
+        rides: data.data || [],
+        ridesTotalCount: data.total || 0,
+        isLoading: false,
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred";
+      set({ error: msg, isLoading: false });
+    }
+  },
+
+  updateRide: async (id, updates) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(`${API_URL}/api/rides/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to update ride");
+
+      toast.success("Ride updated successfully");
+      set({ isLoading: false });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred";
+      toast.error(msg);
+      set({ error: msg, isLoading: false });
+      throw error;
+    }
+  },
+
+  cancelRide: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(`${API_URL}/api/rides/${id}/cancel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to cancel ride");
+
+      toast.success("Ride cancelled successfully");
+      set({ isLoading: false });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred";
+      toast.error(msg);
+      set({ error: msg, isLoading: false });
+      throw error;
+    }
+  },
+
+  // ── Bookings Management ───────────────────────────────────────────
+  getAllBookings: async (params) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const qs = new URLSearchParams();
+      if (params?.status) qs.set("status", params.status);
+      if (params?.ride_id) qs.set("ride_id", params.ride_id);
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+
+      const response = await fetch(`${API_URL}/api/booking/all?${qs}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to fetch bookings");
+
+      set({
+        bookings: data.data || [],
+        bookingsTotalCount: data.total || 0,
+        isLoading: false,
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred";
+      set({ error: msg, isLoading: false });
+    }
+  },
+
+  acceptBooking: async (id, admin_note) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(`${API_URL}/api/booking/accept/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ admin_note }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to accept booking");
+
+      toast.success("Booking accepted");
+      set({ isLoading: false });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred";
+      toast.error(msg);
+      set({ error: msg, isLoading: false });
+      throw error;
+    }
+  },
+
+  declineBooking: async (id, admin_note) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(`${API_URL}/api/booking/decline/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ admin_note }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to decline booking");
+
+      toast.success("Booking declined");
+      set({ isLoading: false });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred";
+      toast.error(msg);
+      set({ error: msg, isLoading: false });
+      throw error;
+    }
+  },
+
+  // ── History ─────────────────────────────────────────────────────────
+  getDriverRideHistory: async (driverId) => {
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const qs = new URLSearchParams({ driver_id: driverId, limit: "50" });
+      const response = await fetch(`${API_URL}/api/rides/all?${qs}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to fetch ride history");
+      return (data.data || []) as AdminRide[];
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred";
+      toast.error(msg);
+      return [];
+    }
+  },
+
+  getUserBookingHistory: async (userId) => {
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const qs = new URLSearchParams({ user_id: userId, limit: "50" });
+      const response = await fetch(`${API_URL}/api/booking/all?${qs}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to fetch booking history");
+      return (data.data || []) as AdminBooking[];
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "An error occurred";
+      toast.error(msg);
+      return [];
     }
   },
 }));

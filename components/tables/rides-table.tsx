@@ -37,42 +37,92 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AdminDetailDrawer } from "@/components/modals/admin-detail-drawer";
+import { RideDetailDrawer } from "@/components/modals/ride-detail-drawer";
+import { ProfileAvatar } from "@/components/shared/profile-avatar";
 import {
-  Shield,
-  Edit2,
-  Trash2,
-  Flag,
-  FlagOff,
+  MapPin,
+  Ban,
+  Star,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-  Loader2,
-  ShieldAlert,
-  CheckCircle,
+  Route,
 } from "lucide-react";
-import type { Admin } from "@/store/useAdminStore";
+import type { AdminRide } from "@/store/useAdminStore";
 
-interface AdminsTableProps {
-  admins: Admin[];
-  onFlag?: (admin: Admin) => void;
-  onEdit?: (admin: Admin) => void;
-  onDelete?: (admin: Admin) => void;
-  flaggingId?: string | null;
+const statusStyles: Record<
+  string,
+  {
+    variant: "default" | "secondary" | "destructive" | "outline";
+    label: string;
+    className: string;
+  }
+> = {
+  scheduled: {
+    variant: "outline",
+    label: "Scheduled",
+    className: "text-blue-700 border-blue-200 bg-blue-50",
+  },
+  available: {
+    variant: "outline",
+    label: "Available",
+    className: "text-emerald-700 border-emerald-200 bg-emerald-50",
+  },
+  accepted: {
+    variant: "outline",
+    label: "Accepted",
+    className: "text-amber-700 border-amber-200 bg-amber-50",
+  },
+  in_progress: {
+    variant: "outline",
+    label: "In Progress",
+    className: "text-purple-700 border-purple-200 bg-purple-50",
+  },
+  completed: {
+    variant: "default",
+    label: "Completed",
+    className: "",
+  },
+  cancelled: {
+    variant: "destructive",
+    label: "Cancelled",
+    className: "",
+  },
+};
+
+function getDriverName(ride: AdminRide): string {
+  const d = ride.driver_id;
+  if (typeof d === "object" && d) return d.user_id?.name ?? "Unknown";
+  return "Unknown";
 }
 
-export function AdminsTable({
-  admins,
-  onFlag,
-  onEdit,
-  onDelete,
-  flaggingId,
-}: AdminsTableProps) {
+function getLocationShort(loc: any): string {
+  if (typeof loc === "object" && loc) {
+    return loc.short_name || loc.name || "—";
+  }
+  return "—";
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("en-NG", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+interface RidesTableProps {
+  rides: AdminRide[];
+  onCancel?: (ride: AdminRide) => void;
+}
+
+export function RidesTable({ rides, onCancel }: RidesTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  const columns = React.useMemo<ColumnDef<Admin>[]>(
+  const columns = React.useMemo<ColumnDef<AdminRide>[]>(
     () => [
       {
         id: "row_number",
@@ -87,74 +137,122 @@ export function AdminsTable({
         enableHiding: false,
       },
       {
-        accessorKey: "name",
-        header: "Admin",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Shield className="h-3.5 w-3.5 text-primary" />
+        accessorFn: (row) => getDriverName(row),
+        id: "driver",
+        header: "Driver",
+        cell: ({ row }) => {
+          const ride = row.original;
+          const driver = ride.driver_id;
+          const name = getDriverName(ride);
+          const vehicle =
+            typeof driver === "object" ? driver?.vehicle_model : undefined;
+          const avatar =
+            typeof driver === "object"
+              ? driver?.user_id?.profile_picture || driver?.vehicle_image
+              : undefined;
+          const rating =
+            typeof driver === "object" ? driver?.rating : undefined;
+          return (
+            <div className="flex items-center gap-2">
+              <ProfileAvatar src={avatar} name={name} size="sm" />
+              <div className="min-w-0">
+                <RideDetailDrawer
+                  ride={ride}
+                  onCancel={onCancel ? () => onCancel(ride) : undefined}
+                  trigger={
+                    <Button
+                      variant="link"
+                      className="text-foreground w-fit px-0 text-left h-auto p-0 text-sm font-medium hover:underline"
+                    >
+                      {name}
+                    </Button>
+                  }
+                />
+                {vehicle && (
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {vehicle}
+                  </p>
+                )}
+              </div>
             </div>
-            <AdminDetailDrawer
-              admin={row.original}
-              onFlag={onFlag ? () => onFlag(row.original) : undefined}
-              onEdit={onEdit ? () => onEdit(row.original) : undefined}
-              onDelete={onDelete ? () => onDelete(row.original) : undefined}
-            />
-          </div>
-        ),
+          );
+        },
         enableHiding: false,
       },
       {
-        accessorKey: "email",
-        header: "Email",
+        id: "route",
+        header: "Route",
+        accessorFn: (row) =>
+          `${getLocationShort(row.pickup_location_id)} → ${getLocationShort(row.destination_id)}`,
         cell: ({ row }) => (
-          <span className="text-muted-foreground">{row.original.email}</span>
-        ),
-      },
-      {
-        accessorKey: "role",
-        header: "Role",
-        cell: ({ row }) => (
-          <Badge
-            variant={
-              row.original.role === "super_admin" ? "default" : "secondary"
-            }
-            className="text-muted-foreground px-1.5"
-          >
-            {row.original.role === "super_admin" ? "Super Admin" : "Admin"}
-          </Badge>
-        ),
-      },
-      {
-        accessorKey: "is_flagged",
-        header: "Status",
-        cell: ({ row }) => (
-          <Badge
-            variant={row.original.is_flagged ? "destructive" : "outline"}
-            className="text-muted-foreground px-1.5 capitalize"
-          >
-            {row.original.is_flagged ? (
-              <span className="flex items-center gap-1">
-                <ShieldAlert className="h-3 w-3" />
-                Flagged
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
+              <span className="truncate max-w-[80px]">
+                {getLocationShort(row.original.pickup_location_id)}
               </span>
-            ) : (
-              <span className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3" />
-                Active
+            </div>
+            <span className="text-muted-foreground">→</span>
+            <div className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
+              <span className="truncate max-w-[80px]">
+                {getLocationShort(row.original.destination_id)}
               </span>
-            )}
-          </Badge>
+            </div>
+          </div>
         ),
       },
       {
-        accessorKey: "createdAt",
-        header: "Joined",
+        accessorKey: "fare",
+        header: "Fare",
         cell: ({ row }) => (
-          <span className="text-muted-foreground">
-            {new Date(row.original.createdAt).toLocaleDateString()}
+          <span className="font-medium">
+            ₦{row.original.fare?.toLocaleString() || "0"}
           </span>
         ),
+      },
+      {
+        id: "seats",
+        header: "Seats",
+        accessorFn: (row) => `${row.booked_seats || 0}/${row.available_seats}`,
+        cell: ({ row }) => (
+          <span className="text-xs">
+            <span className="font-medium">
+              {row.original.booked_seats || 0}
+            </span>
+            <span className="text-muted-foreground">
+              /{row.original.available_seats}
+            </span>
+          </span>
+        ),
+      },
+      {
+        accessorKey: "departure_time",
+        header: "Departure",
+        cell: ({ row }) => (
+          <span className="text-xs">
+            {formatDate(row.original.departure_time)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const s = statusStyles[row.original.status] || {
+            variant: "secondary" as const,
+            label: row.original.status,
+            className: "",
+          };
+          return (
+            <Badge
+              variant={s.variant}
+              className={`px-1.5 text-[10px] ${s.className}`}
+            >
+              {s.label}
+            </Badge>
+          );
+        },
       },
       {
         id: "actions",
@@ -171,62 +269,41 @@ export function AdminsTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              {onFlag &&
-                (() => {
-                  const isFlagged = row.original.is_flagged;
-                  const isLoading = flaggingId === row.original._id;
-                  return (
+              <DropdownMenuItem asChild>
+                <RideDetailDrawer
+                  ride={row.original}
+                  onCancel={onCancel ? () => onCancel(row.original) : undefined}
+                  trigger={
+                    <button className="flex w-full items-center text-sm px-2 py-1.5 cursor-default">
+                      <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                      View Details
+                    </button>
+                  }
+                />
+              </DropdownMenuItem>
+              {onCancel &&
+                !["completed", "cancelled"].includes(row.original.status) && (
+                  <>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => onFlag(row.original)}
-                      disabled={isLoading}
-                      className={
-                        isFlagged
-                          ? "text-green-600 focus:text-green-600"
-                          : "text-amber-600 focus:text-amber-600"
-                      }
+                      variant="destructive"
+                      onClick={() => onCancel(row.original)}
                     >
-                      {isLoading ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                      ) : isFlagged ? (
-                        <FlagOff className="h-3.5 w-3.5 mr-1.5" />
-                      ) : (
-                        <Flag className="h-3.5 w-3.5 mr-1.5" />
-                      )}
-                      {isFlagged ? "Unflag Admin" : "Flag Admin"}
+                      <Ban className="h-3.5 w-3.5 mr-1.5" />
+                      Cancel Ride
                     </DropdownMenuItem>
-                  );
-                })()}
-              {onEdit && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onEdit(row.original)}>
-                    <Edit2 className="h-3.5 w-3.5 mr-1.5" />
-                    Edit Role
-                  </DropdownMenuItem>
-                </>
-              )}
-              {onDelete && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => onDelete(row.original)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              )}
+                  </>
+                )}
             </DropdownMenuContent>
           </DropdownMenu>
         ),
       },
     ],
-    [onFlag, onEdit, onDelete],
+    [onCancel],
   );
 
   const table = useReactTable({
-    data: admins,
+    data: rides,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -237,11 +314,11 @@ export function AdminsTable({
     initialState: { pagination: { pageSize: 10 } },
   });
 
-  if (admins.length === 0) {
+  if (rides.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Shield className="h-10 w-10 text-muted-foreground/50 mb-3" />
-        <p className="text-sm text-muted-foreground">No admins found</p>
+        <Route className="h-10 w-10 text-muted-foreground/50 mb-3" />
+        <p className="text-sm text-muted-foreground">No rides found</p>
       </div>
     );
   }
@@ -299,14 +376,14 @@ export function AdminsTable({
         </div>
         <div className="flex w-full items-center gap-8 lg:w-fit">
           <div className="hidden items-center gap-2 lg:flex">
-            <Label htmlFor="admins-rpp" className="text-sm font-medium">
+            <Label htmlFor="rides-rpp" className="text-sm font-medium">
               Rows per page
             </Label>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(v) => table.setPageSize(Number(v))}
             >
-              <SelectTrigger size="sm" className="w-20" id="admins-rpp">
+              <SelectTrigger size="sm" className="w-20" id="rides-rpp">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
