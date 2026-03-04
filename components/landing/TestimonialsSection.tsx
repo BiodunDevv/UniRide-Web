@@ -1,63 +1,59 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  MessageSquare,
+  Download,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import Link from "next/link";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+interface Testimonial {
+  name: string;
+  role: string;
+  image?: string;
+  title: string;
+  text: string;
+  rating: number;
+}
 
 export default function TestimonialsSection() {
-  const testimonials = [
-    {
-      name: "Chioma Okafor",
-      role: "Computer Science Student, UNILAG",
-      image:
-        "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&q=80",
-      text: "UniRide has made getting to campus so much easier! The drivers are verified and professional. I feel safe using it even for late evening classes. Best campus transportation app!",
-      rating: 5,
-    },
-    {
-      name: "Tunde Adebayo",
-      role: "Business Administration, UI",
-      image:
-        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80",
-      text: "The real-time tracking feature gives me peace of mind. My parents can see exactly where I am during rides. Plus, the fares are very affordable for students like us.",
-      rating: 5,
-    },
-    {
-      name: "Amaka Nwosu",
-      role: "Medical Student, UNIBEN",
-      image:
-        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80",
-      text: "I've been using UniRide for 6 months now. The 4-digit check-in code system is brilliant! No more mix-ups with drivers. It's exactly what students need.",
-      rating: 5,
-    },
-    {
-      name: "Ibrahim Hassan",
-      role: "Engineering Student, ABU",
-      image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
-      text: "As a student who doesn't have a car, UniRide has been a lifesaver. Quick pickups, professional drivers, and the payment options work perfectly for me. Highly recommended!",
-      rating: 5,
-    },
-    {
-      name: "Grace Okoro",
-      role: "Law Student, UNIPORT",
-      image:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80",
-      text: "The safety features are top-notch! I love that I can share my ride details with family. The drivers are always respectful and the app is super easy to use.",
-      rating: 5,
-    },
-    {
-      name: "Emeka Eze",
-      role: "Economics Student, UNIZIK",
-      image:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
-      text: "UniRide understands student life. Affordable fares, reliable drivers, and the biometric login makes me feel secure. Best decision I made this semester!",
-      rating: 5,
-    },
-  ];
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/reviews/public`);
+        const data = await res.json();
+        if (data.success && data.data?.length > 0) {
+          const mapped: Testimonial[] = data.data.map((r: any) => ({
+            name: r.user_id?.name || "UniRide User",
+            role:
+              r.user_id?.role === "driver" ? "UniRide Driver" : "UniRide User",
+            image: r.user_id?.profile_picture || undefined,
+            title: r.title || "",
+            text: r.message,
+            rating: r.rating,
+          }));
+          setTestimonials(mapped);
+        }
+      } catch {
+        // No fallback — show CTA instead
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -76,6 +72,41 @@ export default function TestimonialsSection() {
     }
   };
 
+  if (isLoading) return null;
+
+  // ── No reviews yet — show professional CTA ──
+  if (testimonials.length === 0) {
+    return (
+      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-muted">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
+            <MessageSquare className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">
+            Your Voice Matters
+          </h2>
+          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+            We&apos;re building something special for students across Nigeria.
+            Be among the first to share your experience — download the UniRide
+            app, take a ride, and let the community know what you think.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button size="lg" asChild>
+              <Link href="/reviews">
+                <Star className="w-4 h-4 mr-2" />
+                Leave a Review
+              </Link>
+            </Button>
+          </div>
+          <p className="mt-6 text-xs text-muted-foreground/60">
+            Reviews from verified UniRide users will appear here once submitted.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Show real reviews ──
   return (
     <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-muted">
       <div className="max-w-9xl mx-auto w-full">
@@ -85,7 +116,8 @@ export default function TestimonialsSection() {
               What Students Say
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Based on reviews from students
+              Based on {testimonials.length} verified review
+              {testimonials.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
@@ -98,39 +130,51 @@ export default function TestimonialsSection() {
             {testimonials.map((testimonial, index) => (
               <Card
                 key={index}
-                className="w-72 md:w-80 shrink-0 bg-card border-none shadow-sm"
+                className="w-72 md:w-80 shrink-0 bg-card border-none shadow-sm hover:shadow-md transition-shadow duration-200"
               >
-                <CardContent className="pt-6">
+                <CardContent className="pt-6 pb-4">
                   {/* Stars */}
-                  <div className="flex items-center space-x-1 mb-3">
-                    {[...Array(testimonial.rating)].map((_, i) => (
+                  <div className="flex items-center space-x-0.5 mb-4">
+                    {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className="w-4 h-4 text-yellow-400 fill-current"
+                        className={`w-3.5 h-3.5 ${
+                          i < testimonial.rating
+                            ? "text-yellow-400 fill-current"
+                            : "text-muted-foreground/20 fill-current"
+                        }`}
                       />
                     ))}
                   </div>
 
-                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  {/* Title */}
+                  {testimonial.title && (
+                    <h3 className="font-semibold text-sm text-foreground mb-2 line-clamp-1">
+                      {testimonial.title}
+                    </h3>
+                  )}
+
+                  {/* Review text */}
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
                     &ldquo;{testimonial.text}&rdquo;
                   </p>
                 </CardContent>
-                <CardFooter className="border-none pt-0">
+                <CardFooter className="border-t border-border/50 pt-4">
                   <div className="flex items-center space-x-3">
                     <Avatar size="lg">
                       <AvatarImage
                         src={testimonial.image}
                         alt={testimonial.name}
                       />
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
                         {testimonial.name
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div className="font-semibold text-sm text-foreground">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm text-foreground truncate">
                         {testimonial.name}
                       </div>
                       <div className="text-xs text-muted-foreground">

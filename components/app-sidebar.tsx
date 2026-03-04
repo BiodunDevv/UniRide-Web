@@ -91,6 +91,11 @@ const navMain = [
     url: "/dashboard/broadcast",
     icon: <SendIcon />,
   },
+  {
+    title: "Reviews",
+    url: "/dashboard/reviews",
+    icon: <MessageSquareIcon />,
+  },
 ];
 
 const navSecondary = [

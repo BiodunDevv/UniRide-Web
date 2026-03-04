@@ -78,6 +78,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/reviews"
+                  className="hover:text-primary-foreground transition"
+                >
+                  Reviews
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/support"
                   className="hover:text-primary-foreground transition"
                 >

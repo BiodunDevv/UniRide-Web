@@ -31,6 +31,7 @@ export default function Header() {
     { text: "About", href: "#about" },
     { text: "For Drivers", href: "#drivers" },
     { text: "Safety", href: "#safety" },
+    { text: "Reviews", href: "/reviews" },
     { text: "Support", href: "/support" },
   ];
 
