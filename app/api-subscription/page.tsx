@@ -22,7 +22,6 @@ import {
   Map,
   Info,
   Check,
-  ChevronRight,
   Building2,
 } from "lucide-react";
 import Link from "next/link";
@@ -179,7 +178,7 @@ function TimelineItem({
               : "text-gray-300"
         }`}
       >
-        $17.99
+$15
       </span>
     </div>
   );
@@ -187,8 +186,8 @@ function TimelineItem({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function APISubscriptionPage() {
-  const MONTHLY_PRICE = 17.99;
-  const MONTHS = 4;
+  const MONTHLY_PRICE = 15;
+  const MONTHS = 6;
   const TOTAL = MONTHLY_PRICE * MONTHS;
 
   return (
@@ -272,7 +271,7 @@ export default function APISubscriptionPage() {
                     variant="outline"
                     className="text-[#042F40] border-[#042F40]/20 bg-[#042F40]/5"
                   >
-                    4 Months (Final Year)
+                    6 Months (Final Year)
                   </Badge>
                 </div>
               </div>
@@ -335,7 +334,7 @@ export default function APISubscriptionPage() {
               <div className="flex items-center gap-2 mb-3">
                 <CreditCard className="w-4 h-4 text-[#042F40]" />
                 <h3 className="font-semibold text-[#042F40] text-sm">
-                  Subscription Plan — 4 Months
+                  Subscription Plan — 6 Months
                 </h3>
               </div>
 
@@ -352,7 +351,7 @@ export default function APISubscriptionPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-[#042F40]">
-                      ${MONTHLY_PRICE.toFixed(2)}
+                      ${MONTHLY_PRICE}
                     </p>
                     <p className="text-xs text-muted-foreground">per month</p>
                   </div>
@@ -390,25 +389,37 @@ export default function APISubscriptionPage() {
                 <div className="space-y-3">
                   <TimelineItem
                     month="M1"
-                    label="Month 1 — Project Setup & Core Development"
+                    label="Month 1 — Project Setup & Core Architecture"
                     isActive={true}
                     isPast={false}
                   />
                   <TimelineItem
                     month="M2"
-                    label="Month 2 — Feature Development & Testing"
+                    label="Month 2 — Core Feature Development"
                     isActive={false}
                     isPast={false}
                   />
                   <TimelineItem
                     month="M3"
-                    label="Month 3 — Integration & User Testing"
+                    label="Month 3 — Advanced Features & Integration"
                     isActive={false}
                     isPast={false}
                   />
                   <TimelineItem
                     month="M4"
-                    label="Month 4 — Final Testing & Project Defense"
+                    label="Month 4 — User Testing & Optimization"
+                    isActive={false}
+                    isPast={false}
+                  />
+                  <TimelineItem
+                    month="M5"
+                    label="Month 5 — Final Testing & Documentation"
+                    isActive={false}
+                    isPast={false}
+                  />
+                  <TimelineItem
+                    month="M6"
+                    label="Month 6 — Project Defense & Submission"
                     isActive={false}
                     isPast={false}
                   />
@@ -422,13 +433,13 @@ export default function APISubscriptionPage() {
                     Monthly Cost
                   </p>
                   <p className="text-sm font-semibold">
-                    ${MONTHLY_PRICE.toFixed(2)} × {MONTHS} months
+                    ${MONTHLY_PRICE} × {MONTHS} months
                   </p>
                 </div>
                 <Separator className="bg-white/10 mb-3" />
                 <div className="flex items-center justify-between">
                   <p className="text-base font-bold">Total Investment</p>
-                  <p className="text-2xl font-bold">${TOTAL.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">${TOTAL}</p>
                 </div>
                 <p className="text-xs text-white/50 mt-2 text-right">
                   Billed monthly for project duration
@@ -465,8 +476,8 @@ export default function APISubscriptionPage() {
                   },
                   {
                     icon: Clock,
-                    title: "Limited Duration — 4 Months Only",
-                    desc: "This is not a recurring subscription beyond the project timeline. The service will only be active for the 4-month duration needed to develop, test, and defend the final year project.",
+                    title: "Limited Duration — 6 Months Only",
+                    desc: "This is not a recurring subscription beyond the project timeline. The service will only be active for the 6-month duration needed to develop, test, and defend the final year project.",
                   },
                 ].map((item, i) => (
                   <div
@@ -508,7 +519,7 @@ export default function APISubscriptionPage() {
                     Monthly Cost
                   </div>
                   <div className="p-3 font-semibold text-[#042F40] bg-muted/50 border-b text-center">
-                    4-Month Total
+                    6-Month Total
                   </div>
 
                   {/* Google Maps */}
@@ -519,7 +530,7 @@ export default function APISubscriptionPage() {
                     ~$70+
                   </div>
                   <div className="p-3 text-muted-foreground border-b text-center">
-                    ~$280+
+                    ~$420+
                   </div>
 
                   {/* Mapbox */}
@@ -528,10 +539,10 @@ export default function APISubscriptionPage() {
                     Mapbox
                   </div>
                   <div className="p-3 font-semibold text-green-700 bg-green-50 border-b text-center">
-                    $17.99
+                    $15
                   </div>
                   <div className="p-3 font-semibold text-green-700 bg-green-50 border-b text-center">
-                    $71.96
+                    $90
                   </div>
 
                   {/* HERE Maps */}
@@ -542,7 +553,7 @@ export default function APISubscriptionPage() {
                     ~$49+
                   </div>
                   <div className="p-3 text-muted-foreground text-center">
-                    ~$196+
+                    ~$294+
                   </div>
                 </div>
               </div>
@@ -559,32 +570,54 @@ export default function APISubscriptionPage() {
                 Summary
               </AlertTitle>
               <AlertDescription className="text-green-800 text-xs leading-relaxed">
-                A one-time investment of{" "}
-                <span className="font-bold">${TOTAL.toFixed(2)}</span> (
-                ${MONTHLY_PRICE.toFixed(2)}/month × 4 months) enables all
+                A total investment of{" "}
+                <span className="font-bold">${TOTAL}</span> (
+                ${MONTHLY_PRICE}/month × {MONTHS} months) enables all
                 mapping, navigation, and location features required for the
                 UniRide final year project. This is the most cost-effective
                 professional mapping solution available.
               </AlertDescription>
             </Alert>
 
-            <Button
-              className="w-full h-12 text-sm font-bold"
-              asChild
-            >
-              <a
-                href="https://account.mapbox.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Proceed to Mapbox Payment Portal
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </a>
-            </Button>
-            <p className="text-xs text-center text-muted-foreground mt-3">
-              You will be redirected to Mapbox&apos;s official billing page to
-              complete the subscription.
+            {/* Payment Method */}
+            <div className="border-2 border-dashed border-[#042F40]/20 p-5 mb-4 bg-[#042F40]/2">
+              <div className="flex items-center gap-2 mb-3">
+                <CreditCard className="w-4 h-4 text-[#042F40]" />
+                <h3 className="font-semibold text-[#042F40] text-sm">
+                  Payment Information
+                </h3>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                The Mapbox API subscription is billed directly through the Mapbox
+                platform. Payment can be made via international debit or credit
+                card (Visa, Mastercard). The subscription will be set up under
+                Dayo&apos;s developer account and can be cancelled at any time after
+                the project concludes.
+              </p>
+              <div className="border bg-white p-4 space-y-2.5 text-xs">
+                {[
+                  ["Billing Cycle", "Monthly"],
+                  ["Amount Per Month", "$15 (approx. ₦23,500)"],
+                  ["Total Duration", "6 months"],
+                  ["Total Cost", "$90 (approx. ₦141,000)"],
+                  ["Payment Method", "Visa / Mastercard (International)"],
+                  ["Cancellation", "Can be cancelled anytime after project"],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between gap-4">
+                    <span className="text-muted-foreground shrink-0">
+                      {label}
+                    </span>
+                    <span className="font-medium text-[#042F40] text-right">
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-xs text-center text-muted-foreground">
+              This document was generated for review purposes. For questions,
+              contact Oladele Oladayo Isaac.
             </p>
           </div>
         </div>
