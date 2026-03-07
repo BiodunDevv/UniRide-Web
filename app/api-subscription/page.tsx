@@ -249,7 +249,7 @@ export default function APISubscriptionPage() {
               <div className="border bg-muted/30 p-4 space-y-2.5 text-xs">
                 {[
                   ["Full Name", "Oladele Oladayo Isaac"],
-                  ["Matric Number", "BU22CSC1043"],
+                  ["Matric Number", "BU22CSC1041"],
                   ["Department", "Computer Science"],
                   ["Project", "UniRide — Campus Ride-Hailing System"],
                   ["Institution", "Bowen University"],
