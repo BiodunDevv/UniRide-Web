@@ -132,7 +132,7 @@ function DevicesTab() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 space-y-0">
           <div className="space-y-1">
             <CardTitle className="text-sm flex items-center gap-2">
               <Laptop className="h-4 w-4" />
@@ -146,7 +146,7 @@ function DevicesTab() {
             <Button
               variant="destructive"
               size="sm"
-              className="text-xs"
+              className="text-xs w-full sm:w-auto"
               onClick={() => setShowLogoutAll(true)}
               disabled={isLoading}
             >
@@ -833,7 +833,7 @@ function LanguagesTab() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 space-y-0">
         <div className="space-y-1">
           <CardTitle className="text-sm flex items-center gap-2">
             <Globe className="h-4 w-4" />
@@ -845,7 +845,7 @@ function LanguagesTab() {
         </div>
         <Button
           size="sm"
-          className="text-xs"
+          className="text-xs w-full sm:w-auto"
           onClick={() => setShowAdd(!showAdd)}
         >
           <Plus className="h-3.5 w-3.5 mr-1" />
@@ -855,7 +855,7 @@ function LanguagesTab() {
       <CardContent className="space-y-4">
         {showAdd && (
           <div className="p-3 border rounded-lg space-y-3 bg-muted/30">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div className="space-y-1">
                 <Label className="text-[10px]">Code</Label>
                 <Input
@@ -1248,7 +1248,10 @@ export default function SettingsPage() {
       />
 
       <Tabs defaultValue="devices" className="gap-4">
-        <TabsList variant="line" className="w-full justify-start border-b">
+        <TabsList
+          variant="line"
+          className="w-full justify-start border-b overflow-x-auto [&>button]:flex-none"
+        >
           <TabsTrigger value="devices" className="text-xs">
             <Laptop className="h-3.5 w-3.5" />
             Devices
