@@ -192,13 +192,13 @@ export default function APISubscriptionPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-[#042F40] via-[#063d54] to-[#042F40] flex flex-col">
-      <PageHeader subtitle="API Services" />
+      <PageHeader subtitle="Platform Services" />
 
       <div className="flex-1 p-4">
         <div className="max-w-3xl mx-auto space-y-5">
           {/* ── Hero Card ─────────────────────────────────────────── */}
           <div className="bg-white p-5 sm:p-8 shadow-2xl">
-            {/* Mapbox Badge */}
+            {/* Mapping Badge */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-[#4264fb] flex items-center justify-center">
@@ -206,10 +206,10 @@ export default function APISubscriptionPage() {
                 </div>
                 <div>
                   <h1 className="text-lg sm:text-xl font-bold text-[#042F40]">
-                    Mapbox API Services
+                    Mapping & Location Services
                   </h1>
                   <p className="text-xs text-muted-foreground">
-                    Maps, Navigation & Geocoding Platform
+                    Maps, routing, live location, and geocoding
                   </p>
                 </div>
               </div>
@@ -230,11 +230,10 @@ export default function APISubscriptionPage() {
                 About This Subscription
               </AlertTitle>
               <AlertDescription className="text-blue-800 text-xs leading-relaxed">
-                Mapbox is a core API dependency for the UniRide final year
-                project. It provides the real-time maps, route calculations, and
-                location search features that make the ride-hailing application
-                functional. Without Mapbox, the app cannot display maps, calculate
-                routes, or match riders with drivers.
+                UniRide depends on a professional mapping and location stack for
+                live maps, route calculations, and location search. This page
+                explains the infrastructure budget behind those features without
+                locking the project to a single vendor.
               </AlertDescription>
             </Alert>
 
@@ -279,19 +278,19 @@ export default function APISubscriptionPage() {
 
             <Separator className="mb-5" />
 
-            {/* Why Mapbox is Essential */}
+            {/* Why Mapping Is Essential */}
             <div className="mb-5">
               <div className="flex items-center gap-2 mb-3">
                 <Map className="w-4 h-4 text-[#042F40]" />
                 <h3 className="font-semibold text-[#042F40] text-sm">
-                  Why Mapbox Is Essential
+                  Why Mapping Infrastructure Is Essential
                 </h3>
               </div>
               <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
                 UniRide is a real-time campus ride-hailing application — similar
                 to Uber or Bolt — built as a final year Computer Science project.
-                The following core features are powered entirely by Mapbox and
-                cannot function without it:
+                The following core features depend on mapping, routing, and live
+                location services and cannot function without them:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <FeatureCard
@@ -322,7 +321,7 @@ export default function APISubscriptionPage() {
                 <FeatureCard
                   icon={Shield}
                   title="Safety & Ride Matching"
-                  description="Proximity-based driver matching uses geospatial queries powered by Mapbox to pair riders with the nearest available driver."
+                  description="Proximity-based driver matching uses geospatial queries to pair riders with the nearest available driver."
                 />
               </div>
             </div>
@@ -343,10 +342,10 @@ export default function APISubscriptionPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm font-bold text-[#042F40]">
-                      Mapbox API — Standard Plan
+                      Mapping Services Budget
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Maps, Directions, Geocoding & Navigation SDK
+                      Maps, directions, geocoding, and location infrastructure
                     </p>
                   </div>
                   <div className="text-right">
@@ -368,8 +367,8 @@ export default function APISubscriptionPage() {
                     "100,000 map loads per month",
                     "100,000 geocoding requests per month",
                     "100,000 directions requests per month",
-                    "Real-time Navigation SDK access",
-                    "Maps SDK for React Native (Android & iOS)",
+                    "Real-time navigation support",
+                    "Mobile maps SDK support",
                     "Turn-by-turn navigation support",
                     "Standard support & documentation access",
                   ].map((item, i) => (
@@ -462,7 +461,7 @@ export default function APISubscriptionPage() {
                   {
                     icon: Building2,
                     title: "Industry-Standard Technology",
-                    desc: "Mapbox is used by Uber, Instacart, Shopify, and thousands of production applications worldwide. Using it demonstrates professional-grade engineering in Dayo's final year project.",
+                    desc: "Professional mapping infrastructure is used by top mobility and logistics platforms worldwide. Using that level of tooling demonstrates serious engineering depth in Dayo's final year project.",
                   },
                   {
                     icon: GraduationCap,
@@ -471,8 +470,8 @@ export default function APISubscriptionPage() {
                   },
                   {
                     icon: Shield,
-                    title: "No Free Alternative Exists",
-                    desc: "Google Maps API is significantly more expensive ($7+ per 1,000 loads). Mapbox offers the best value for mobile map rendering, navigation, and geocoding at this price point.",
+                    title: "Real Maps Need Real Infrastructure",
+                    desc: "Campus ride-hailing needs accurate maps, routing, and live location updates. Production-grade mapping services remain one of the most important external costs in the project.",
                   },
                   {
                     icon: Clock,
@@ -533,10 +532,10 @@ export default function APISubscriptionPage() {
                     ~$420+
                   </div>
 
-                  {/* Mapbox */}
+                  {/* UniRide mapping budget */}
                   <div className="p-3 font-medium text-[#042F40] bg-green-50 border-b flex items-center gap-1.5">
                     <CheckCircle2 className="w-3 h-3 text-green-600" />
-                    Mapbox
+                    UniRide target budget
                   </div>
                   <div className="p-3 font-semibold text-green-700 bg-green-50 border-b text-center">
                     $15
@@ -558,8 +557,8 @@ export default function APISubscriptionPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2 italic">
-                Mapbox offers the most affordable option with full feature
-                coverage for mobile ride-hailing applications.
+                The project is budgeted around a lean mapping-services plan with
+                full feature coverage for mobile ride-hailing workflows.
               </p>
             </div>
 
@@ -574,8 +573,8 @@ export default function APISubscriptionPage() {
                 <span className="font-bold">${TOTAL}</span> (
                 ${MONTHLY_PRICE}/month × {MONTHS} months) enables all
                 mapping, navigation, and location features required for the
-                UniRide final year project. This is the most cost-effective
-                professional mapping solution available.
+                UniRide final year project. This keeps the mapping budget clear
+                while allowing the product to stay flexible about providers.
               </AlertDescription>
             </Alert>
 
@@ -588,11 +587,10 @@ export default function APISubscriptionPage() {
                 </h3>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                The Mapbox API subscription is billed directly through the Mapbox
-                platform. Payment can be made via international debit or credit
-                card (Visa, Mastercard). The subscription will be set up under
-                Dayo&apos;s developer account and can be cancelled at any time after
-                the project concludes.
+                The mapping-services budget is intended for the project's live
+                maps, directions, and geocoding infrastructure. Payment can be
+                made via international debit or credit card and can be reviewed
+                or adjusted when the project timeline concludes.
               </p>
               <div className="border bg-white p-4 space-y-2.5 text-xs">
                 {[

@@ -1033,71 +1033,44 @@ function PlatformTab() {
 
   return (
     <div className="space-y-4">
-      {/* Map Provider */}
+      {/* Mobile Maps */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            Map Provider
+            Mobile Maps
           </CardTitle>
           <CardDescription className="text-xs">
-            Choose which map provider mobile apps use. Expo Maps is a fallback
-            for Expo Go development.
+            Control whether the mobile apps render interactive Expo Maps. When
+            turned off, rider and driver trip screens fall back to read-only
+            operational panels instead of breaking the app.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div
-              className={`relative rounded-lg border-2 p-4 cursor-pointer transition-colors ${
-                settings.map_provider === "mapbox"
-                  ? "border-primary bg-primary/5"
-                  : "border-muted hover:border-muted-foreground/30"
-              }`}
-              onClick={() => updateField("map_provider", "mapbox")}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <div className="h-6 w-6 rounded bg-blue-500 flex items-center justify-center">
-                  <span className="text-white text-[10px] font-bold">MB</span>
-                </div>
-                <span className="text-sm font-medium">Mapbox</span>
+          <div className="rounded-xl border bg-muted/30 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs">Enable Expo Maps</Label>
+                <p className="text-[10px] text-muted-foreground">
+                  Powers the interactive mobile map canvas using native Apple
+                  and Google maps.
+                </p>
               </div>
-              <p className="text-[10px] text-muted-foreground">
-                Full-featured maps with custom styling. Requires standalone
-                build.
-              </p>
-            </div>
-            <div
-              className={`relative rounded-lg border-2 p-4 cursor-pointer transition-colors ${
-                settings.map_provider === "expo"
-                  ? "border-primary bg-primary/5"
-                  : "border-muted hover:border-muted-foreground/30"
-              }`}
-              onClick={() => updateField("map_provider", "expo")}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <div className="h-6 w-6 rounded bg-green-500 flex items-center justify-center">
-                  <span className="text-white text-[10px] font-bold">EX</span>
-                </div>
-                <span className="text-sm font-medium">Expo Maps</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground">
-                Works with Expo Go. Uses native Apple/Google maps.
-              </p>
+              <Switch
+                checked={!!settings.expo_maps_enabled}
+                onCheckedChange={(v) => updateField("expo_maps_enabled", v)}
+              />
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Enable Mapbox</Label>
-            <Switch
-              checked={!!settings.mapbox_enabled}
-              onCheckedChange={(v) => updateField("mapbox_enabled", v)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Enable Expo Maps</Label>
-            <Switch
-              checked={!!settings.expo_maps_enabled}
-              onCheckedChange={(v) => updateField("expo_maps_enabled", v)}
-            />
+          <div className="rounded-xl border border-dashed p-4">
+            <p className="text-xs font-medium text-foreground">
+              Graceful fallback behavior
+            </p>
+            <p className="mt-1 text-[10px] leading-5 text-muted-foreground">
+              Even when this switch is off, mobile users can still open trip
+              screens, review route summaries, complete check-ins, and manage
+              live ride actions without an interactive map canvas.
+            </p>
           </div>
         </CardContent>
       </Card>
