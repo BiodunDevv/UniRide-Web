@@ -20,6 +20,7 @@ import { LoadingState, StatsCard } from "@/components/shared";
 import {
   ArrowLeft,
   Mail,
+  Phone,
   Calendar,
   Users,
   ShieldCheck,
@@ -320,6 +321,22 @@ export default function UserDetailPage({
                 <Mail className="h-3 w-3" /> Email
               </span>
               <span className="text-xs">{user.email}</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Phone className="h-3 w-3" /> Phone
+              </span>
+              {user.phone ? (
+                <a
+                  href={`tel:${user.phone}`}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-sky-700 hover:text-sky-800"
+                >
+                  {user.phone}
+                </a>
+              ) : (
+                <span className="text-xs text-muted-foreground">N/A</span>
+              )}
             </div>
             <Separator />
             <div className="flex items-center justify-between">

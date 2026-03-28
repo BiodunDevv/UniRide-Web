@@ -24,6 +24,8 @@ import {
   CheckCircle2,
   XCircle,
   Hash,
+  Phone,
+  ExternalLink,
 } from "lucide-react";
 import type { AdminBooking } from "@/store/useAdminStore";
 
@@ -102,6 +104,7 @@ export function BookingDetailDrawer({
   const userName =
     typeof user === "object" ? (user?.name ?? "Unknown") : "Unknown";
   const userEmail = typeof user === "object" ? user?.email : undefined;
+  const userPhone = typeof user === "object" ? user?.phone : undefined;
   const userAvatar =
     typeof user === "object" ? user?.profile_picture : undefined;
 
@@ -161,10 +164,20 @@ export function BookingDetailDrawer({
           {/* Passenger */}
           <div className="flex items-center gap-3">
             <ProfileAvatar src={userAvatar} name={userName} size="md" />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{userName}</p>
               {userEmail && (
                 <p className="text-[10px] text-muted-foreground">{userEmail}</p>
+              )}
+              {userPhone && (
+                <a
+                  href={`tel:${userPhone}`}
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-sky-700 hover:text-sky-800"
+                >
+                  <Phone className="h-3 w-3" />
+                  {userPhone}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               )}
             </div>
           </div>

@@ -7,7 +7,6 @@ import { io, Socket } from "socket.io-client";
 import {
   MapContainer,
   TileLayer,
-  CircleMarker,
   Tooltip,
   useMap,
   Marker,
@@ -66,6 +65,7 @@ interface ActiveRiderMarker {
   name: string;
   profile_picture?: string | null;
   email?: string | null;
+  phone?: string | null;
   ride_id?: string;
   ride_status?: string;
   booking_status?: string;
@@ -119,6 +119,18 @@ function formatTime(value?: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatRelativeTime(value?: string) {
+  if (!value) return "No recent update";
+  const diffMs = Date.now() - new Date(value).getTime();
+  const diffMinutes = Math.max(0, Math.round(diffMs / 60000));
+  if (diffMinutes < 1) return "Updated just now";
+  if (diffMinutes === 1) return "Updated 1 minute ago";
+  if (diffMinutes < 60) return `Updated ${diffMinutes} minutes ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours === 1) return "Updated 1 hour ago";
+  return `Updated ${diffHours} hours ago`;
 }
 
 export default function LiveMapPage() {
@@ -398,6 +410,42 @@ export default function LiveMapPage() {
     [],
   );
 
+  const buildRiderIcon = useCallback(
+    (rider: ActiveRiderMarker) =>
+      divIcon({
+        className: "active-rider-icon",
+        iconSize: [38, 38],
+        iconAnchor: [19, 19],
+        html: `
+          <div style="position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+            <div style="
+              position:absolute;
+              inset:4px;
+              border-radius:9999px;
+              background:rgba(249,115,22,0.16);
+              border:2px solid #ea580c;
+              box-shadow:0 10px 24px rgba(15,23,42,0.14);
+            "></div>
+            <div style="
+              position:relative;
+              z-index:1;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              width:24px;
+              height:24px;
+              border-radius:9999px;
+              background:#fff7ed;
+              color:#c2410c;
+              font-size:14px;
+              font-weight:700;
+            ">👤</div>
+          </div>
+        `,
+      }),
+    [],
+  );
+
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col gap-6 p-4 md:p-6">
       <Card className="border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100">
@@ -606,19 +654,13 @@ export default function LiveMapPage() {
                   {(view === "all" || view === "riders") &&
                     filteredRiders.map((rider) =>
                       rider.location ? (
-                        <CircleMarker
+                        <Marker
                           key={rider.user_id}
-                          center={[
+                          position={[
                             rider.location.latitude,
                             rider.location.longitude,
                           ]}
-                          radius={9}
-                          pathOptions={{
-                            color: "#7c2d12",
-                            fillColor: "#f97316",
-                            fillOpacity: 0.92,
-                            weight: 2,
-                          }}
+                          icon={buildRiderIcon(rider)}
                           eventHandlers={{
                             click: () =>
                               setSelected({ type: "rider", data: rider }),
@@ -628,12 +670,12 @@ export default function LiveMapPage() {
                             <div className="space-y-1">
                               <p className="font-medium">{rider.name}</p>
                               <p className="text-xs opacity-80">
-                                {rider.pickup_name || "Pickup"} to{" "}
+                                Active ride: {rider.pickup_name || "Pickup"} to{" "}
                                 {rider.dropoff_name || "Destination"}
                               </p>
                             </div>
                           </Tooltip>
-                        </CircleMarker>
+                        </Marker>
                       ) : null,
                     )}
                 </MapContainer>
@@ -669,7 +711,7 @@ export default function LiveMapPage() {
                       const title = item.data.name;
                       const subtitle = isDriver
                         ? `${item.data.vehicle_model || "Vehicle unavailable"}`
-                        : `${item.data.pickup_name || "Pickup"} to ${item.data.dropoff_name || "Destination"}`;
+                        : `Active ride · ${item.data.pickup_name || "Pickup"} to ${item.data.dropoff_name || "Destination"}`;
 
                       return (
                         <button
@@ -794,6 +836,9 @@ export default function LiveMapPage() {
                     <p className="mt-2 text-sm text-slate-700">
                       Last activity: {formatTime(selected.data.last_online_at)}
                     </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {formatRelativeTime(selected.data.last_online_at)}
+                    </p>
                     <p className="mt-1 text-sm text-slate-700">
                       Coordinates:{" "}
                       {selected.data.location
@@ -853,6 +898,9 @@ export default function LiveMapPage() {
                       <p className="mt-1 text-lg font-semibold text-slate-950">
                         {formatTime(selected.data.last_updated_at)}
                       </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {formatRelativeTime(selected.data.last_updated_at)}
+                      </p>
                     </div>
                   </div>
                   <div className="rounded-2xl border border-slate-200 px-4 py-4">
@@ -867,6 +915,11 @@ export default function LiveMapPage() {
                     {selected.data.email ? (
                       <p className="mt-2 text-sm text-slate-700">
                         Contact: {selected.data.email}
+                      </p>
+                    ) : null}
+                    {selected.data.phone ? (
+                      <p className="mt-1 text-sm text-slate-700">
+                        Phone: {selected.data.phone}
                       </p>
                     ) : null}
                   </div>

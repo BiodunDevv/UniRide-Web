@@ -45,6 +45,7 @@ import {
   CreditCard,
   CheckCircle2,
   XCircle,
+  Phone,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -151,6 +152,10 @@ export function BookingsTable({
             typeof booking.user_id === "object"
               ? booking.user_id?.email
               : undefined;
+          const phone =
+            typeof booking.user_id === "object"
+              ? booking.user_id?.phone
+              : undefined;
           const avatar =
             typeof booking.user_id === "object"
               ? booking.user_id?.profile_picture
@@ -176,6 +181,15 @@ export function BookingsTable({
                   <p className="text-[10px] text-muted-foreground truncate">
                     {email}
                   </p>
+                )}
+                {phone && (
+                  <a
+                    href={`tel:${phone}`}
+                    className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium text-sky-700 hover:text-sky-800"
+                  >
+                    <Phone className="h-3 w-3" />
+                    {phone}
+                  </a>
                 )}
               </div>
             </div>

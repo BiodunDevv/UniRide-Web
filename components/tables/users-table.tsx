@@ -41,6 +41,7 @@ import { UserDetailDrawer } from "@/components/modals/user-detail-drawer";
 import Link from "next/link";
 import {
   Users,
+  Phone,
   Flag,
   FlagOff,
   Trash2,
@@ -106,6 +107,15 @@ export function UsersTable({
               <p className="text-[10px] text-muted-foreground">
                 {row.original.email}
               </p>
+              {row.original.phone ? (
+                <a
+                  href={`tel:${row.original.phone}`}
+                  className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium text-sky-700 hover:text-sky-800"
+                >
+                  <Phone className="h-3 w-3" />
+                  {row.original.phone}
+                </a>
+              ) : null}
             </div>
           </div>
         ),

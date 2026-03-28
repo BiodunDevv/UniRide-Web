@@ -21,6 +21,7 @@ import { ProfileAvatar } from "@/components/shared/profile-avatar";
 import {
   Users,
   Mail,
+  Phone,
   Calendar,
   Flag,
   FlagOff,
@@ -156,6 +157,22 @@ export function UserDetailDrawer({
                 <Mail className="h-3 w-3" /> Email
               </Label>
               <span className="text-xs">{user.email}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Phone className="h-3 w-3" /> Phone
+              </Label>
+              {user.phone ? (
+                <a
+                  href={`tel:${user.phone}`}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-sky-700 hover:text-sky-800"
+                >
+                  {user.phone}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : (
+                <span className="text-xs text-muted-foreground">N/A</span>
+              )}
             </div>
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
