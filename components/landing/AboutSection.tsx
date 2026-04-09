@@ -10,11 +10,12 @@ export default function AboutSection() {
         {/* Header */}
         <div className="text-center mb-10 sm:mb-14">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-            About UniRide
+            About Our University Transportation Platform
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            A secure campus ride-hailing platform designed exclusively for
-            university students in Nigeria.
+            UniRide is a secure campus ride-hailing platform designed
+            exclusively for university students who need dependable campus
+            transportation in Nigeria.
           </p>
         </div>
 
@@ -27,24 +28,22 @@ export default function AboutSection() {
               </h3>
               <div className="space-y-3 text-sm sm:text-base text-muted-foreground">
                 <p>
-                  UniRide is a final year project that reimagines campus
-                  transportation. We&apos;ve built a comprehensive platform
-                  where students can create accounts, request rides, track
-                  drivers in real-time using OpenStreetMap, and pay securely via
-                  cash or bank transfer.
+                  UniRide reimagines campus transportation with a student-first
+                  platform where riders can create accounts, request rides,
+                  track drivers in real time, and complete secure payments with
+                  less friction.
                 </p>
                 <p>
-                  Our platform features advanced security measures including
-                  biometric authentication, single-device restriction, and
-                  4-digit ride check-in codes. All drivers undergo rigorous ID
-                  verification and background checks before approval.
+                  Our campus mobility software includes biometric
+                  authentication, single-device restriction, and secure ride
+                  check-in codes. Every driver completes identity verification
+                  and screening before approval.
                 </p>
                 <p>
-                  Powered by Node.js, MongoDB, Socket.io for real-time tracking,
-                  and Redis for optimal performance, UniRide combines
-                  cutting-edge technology with a student-first approach to
-                  create safe, reliable, and affordable transportation across
-                  Nigerian universities.
+                  UniRide combines modern real-time technology with operational
+                  safety controls to deliver safe campus rides, reliable driver
+                  coordination, and affordable university transportation across
+                  Nigerian campuses.
                 </p>
               </div>
             </CardContent>

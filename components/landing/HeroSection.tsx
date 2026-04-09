@@ -82,9 +82,9 @@ export default function HeroSection() {
               </h1>
 
               <p className="text-sm md:text-base text-primary-foreground/70 leading-relaxed max-w-xl">
-                Connect with verified campus drivers through UniRide. Experience
-                secure rides with biometric authentication, real-time GPS
-                tracking, and seamless payment options.
+                UniRide is a university transportation app built for safe
+                campus rides, verified drivers, and reliable student mobility
+                across university communities in Nigeria.
               </p>
             </div>
 
@@ -93,9 +93,12 @@ export default function HeroSection() {
                 size="default"
                 variant="default"
                 className="hover:scale-[1.02] transition-transform text-sm"
+                asChild
               >
-                <Smartphone className="mr-2 h-4 w-4" />
-                Download App
+                <Link href="/support">
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Explore UniRide Support
+                </Link>
               </Button>
               <Button
                 size="sm"
@@ -103,6 +106,9 @@ export default function HeroSection() {
                 asChild
               >
                 <Link href="/driver-apply">Become a Driver</Link>
+              </Button>
+              <Button size="sm" variant="secondary" asChild>
+                <Link href="/terms">View Terms</Link>
               </Button>
             </div>
           </div>

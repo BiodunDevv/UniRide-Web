@@ -38,23 +38,23 @@ export default function Footer() {
             <ul className="space-y-1.5 text-primary-foreground/70 text-xs sm:text-sm">
               <li>
                 <a
-                  href="#about"
+                  href="/#about"
                   className="hover:text-primary-foreground transition"
                 >
                   About UniRide
                 </a>
               </li>
               <li>
-                <a
-                  href="#workflow"
+                <Link
+                  href="/#drivers"
                   className="hover:text-primary-foreground transition"
                 >
                   How It Works
-                </a>
+                </Link>
               </li>
               <li>
                 <a
-                  href="#safety"
+                  href="/#safety"
                   className="hover:text-primary-foreground transition"
                 >
                   Safety
@@ -62,7 +62,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="#contact"
+                  href="/#contact"
                   className="hover:text-primary-foreground transition"
                 >
                   Contact Us
@@ -99,40 +99,40 @@ export default function Footer() {
             <h4 className="font-semibold mb-3 text-sm">For Students</h4>
             <ul className="space-y-1.5 text-primary-foreground/70 text-xs sm:text-sm">
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/support"
                   className="hover:text-primary-foreground transition"
                 >
-                  Download App
-                </a>
+                  Download App Help
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/support"
                   className="hover:text-primary-foreground transition"
                 >
-                  Book a Ride
-                </a>
+                  Book a Ride Help
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/terms"
                   className="hover:text-primary-foreground transition"
                 >
-                  Payment Methods
-                </a>
+                  Payment Terms
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/support"
                   className="hover:text-primary-foreground transition"
                 >
                   Student FAQs
-                </a>
+                </Link>
               </li>
               <li>
                 <a
-                  href="#safety"
+                  href="/#safety"
                   className="hover:text-primary-foreground transition"
                 >
                   Safety Center
@@ -153,24 +153,24 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="#drivers"
+                <Link
+                  href="/#drivers"
                   className="hover:text-primary-foreground transition"
                 >
                   Requirements
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#drivers"
+                <Link
+                  href="/#drivers"
                   className="hover:text-primary-foreground transition"
                 >
                   Earnings
-                </a>
+                </Link>
               </li>
               <li>
                 <a
-                  href="#safety"
+                  href="/#safety"
                   className="hover:text-primary-foreground transition"
                 >
                   Driver Safety

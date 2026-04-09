@@ -1,0 +1,29 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#042F40"/>
+  <rect width="1200" height="630" fill="url(#paint0_radial)"/>
+  <circle cx="980" cy="118" r="182" fill="#0C5C74" fill-opacity="0.32"/>
+  <circle cx="156" cy="548" r="220" fill="#0E7C86" fill-opacity="0.28"/>
+  <rect x="80" y="82" width="1040" height="466" rx="28" fill="white" fill-opacity="0.06" stroke="white" stroke-opacity="0.08"/>
+  <rect x="112" y="118" width="184" height="42" rx="21" fill="#E7F4F8" fill-opacity="0.12"/>
+  <text x="148" y="145" fill="#D7EEF5" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="0.16em">UNI RIDE</text>
+  <text x="112" y="245" fill="white" font-family="Arial, sans-serif" font-size="64" font-weight="700">Campus Ride-Hailing</text>
+  <text x="112" y="320" fill="#A8D6E2" font-family="Arial, sans-serif" font-size="64" font-weight="700">Built for Universities</text>
+  <text x="112" y="384" fill="#C0DDE6" font-family="Arial, sans-serif" font-size="28" font-weight="400">Safe campus rides, verified drivers, and a reliable university transportation app.</text>
+  <rect x="112" y="438" width="230" height="54" rx="12" fill="#F5B942"/>
+  <text x="145" y="473" fill="#042F40" font-family="Arial, sans-serif" font-size="24" font-weight="700">Student-first mobility</text>
+  <rect x="806" y="168" width="230" height="282" rx="26" fill="#021D27" fill-opacity="0.66" stroke="white" stroke-opacity="0.1"/>
+  <rect x="836" y="204" width="170" height="16" rx="8" fill="#E6F3F7"/>
+  <rect x="836" y="238" width="132" height="12" rx="6" fill="#8EC7D8" fill-opacity="0.85"/>
+  <rect x="836" y="286" width="170" height="84" rx="18" fill="#0A445B"/>
+  <path d="M870 327C899.823 289.695 945.451 289.401 973.621 326.347L985.5 341.917C992.159 350.643 1002.48 355.823 1013.45 355.823H1018V370H870V327Z" fill="#49A5C4"/>
+  <circle cx="902" cy="355" r="16" fill="#F5B942"/>
+  <circle cx="970" cy="355" r="16" fill="#F5B942"/>
+  <rect x="836" y="392" width="90" height="12" rx="6" fill="#E6F3F7"/>
+  <rect x="836" y="420" width="124" height="12" rx="6" fill="#8EC7D8" fill-opacity="0.85"/>
+  <defs>
+    <radialGradient id="paint0_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 315) rotate(90) scale(430 820)">
+      <stop stop-color="#0B4E65"/>
+      <stop offset="1" stop-color="#042F40"/>
+    </radialGradient>
+  </defs>
+</svg>

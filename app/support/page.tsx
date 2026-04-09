@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Script from "next/script";
 import { useSupportStore } from "@/store/useSupportStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,6 +148,29 @@ const STATUS_CONFIG: Record<
     badgeClass: "text-gray-700 border-gray-300 bg-gray-50",
   },
 };
+
+function SupportStructuredData() {
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ_ITEMS.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.a,
+      },
+    })),
+  };
+
+  return (
+    <Script
+      id="support-faq-jsonld"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+    />
+  );
+}
 
 // ─── Shared Header ────────────────────────────────────────────────────────────
 function PageHeader() {
@@ -982,6 +1006,7 @@ export default function SupportPage() {
   // ─── HOME VIEW (Help Center) ───────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-linear-to-br from-[#042F40] via-[#063d54] to-[#042F40] flex flex-col">
+      <SupportStructuredData />
       <PageHeader />
 
       <div className="flex-1 p-4 py-6">

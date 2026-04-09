@@ -59,11 +59,12 @@ export default function WhyChooseUs() {
       <div className="max-w-7xl mx-auto w-full">
         <div className="text-center mb-10 sm:mb-14">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-            Why Choose UniRide?
+            Why Students Choose UniRide
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            Experience the most secure and reliable campus ride-hailing platform
-            designed specifically for university students
+            Experience a secure campus ride-hailing platform designed for
+            university students who need fast, safe, and reliable daily
+            transportation.
           </p>
         </div>
 

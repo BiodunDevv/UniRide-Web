@@ -63,11 +63,12 @@ export default function ForDriversSection() {
         {/* Header */}
         <div className="text-center mb-10 sm:mb-14">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-            Drive with UniRide
+            Drive with UniRide on Campus
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto mb-6">
-            Turn your car into an income-generating asset. Join our community of
-            trusted drivers and start earning on your own terms.
+            Join a verified campus driver network, help students move safely,
+            and earn with a university transportation platform designed for
+            trusted campus rides.
           </p>
           <Button size="default" className="text-sm px-6" asChild>
             <Link href="/driver-apply">

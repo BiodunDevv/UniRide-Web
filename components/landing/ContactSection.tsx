@@ -44,11 +44,11 @@ export default function ContactSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <div className="space-y-6">
             <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-              Get in Touch
+              Get Campus Ride Support
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              We&apos;d love to hear from you. Our friendly team is always here
-              to chat.
+              Contact UniRide for rider support, driver onboarding questions,
+              and help with our university transportation platform.
             </p>
 
             <div className="space-y-4">
