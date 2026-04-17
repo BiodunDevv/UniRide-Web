@@ -164,8 +164,13 @@ type AdminLocationRef = {
 
 type AdminDriverRef = {
   _id?: string;
+  phone?: string;
   vehicle_model?: string;
   plate_number?: string;
+  vehicle_color?: string;
+  rating?: number;
+  is_online?: boolean;
+  vehicle_image?: string;
   profile_picture?: string;
   user_id?: AdminUserRef | null;
 };
