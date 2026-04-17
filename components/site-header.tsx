@@ -11,12 +11,10 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Bell,
@@ -43,6 +41,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/driver-applications": "Driver Applications",
   "/dashboard/drivers": "Drivers",
   "/dashboard/users": "Users",
+  "/dashboard/account-deletion-requests": "Deletion Requests",
   "/dashboard/fare-policy": "Fare Policy",
   "/dashboard/bookings": "Bookings",
   "/dashboard/broadcast": "Broadcast",

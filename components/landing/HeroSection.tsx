@@ -82,9 +82,9 @@ export default function HeroSection() {
               </h1>
 
               <p className="text-sm md:text-base text-primary-foreground/70 leading-relaxed max-w-xl">
-                UniRide is a university transportation app built for safe
-                campus rides, verified drivers, and reliable student mobility
-                across university communities in Nigeria.
+                UniRide is a university transportation app built for safe campus
+                rides, verified drivers, and reliable student mobility across
+                university communities in Nigeria.
               </p>
             </div>
 
@@ -95,20 +95,13 @@ export default function HeroSection() {
                 className="hover:scale-[1.02] transition-transform text-sm"
                 asChild
               >
-                <Link href="/support">
+                <Link href="#">
                   <Smartphone className="mr-2 h-4 w-4" />
-                  Explore UniRide Support
+                  Explore UniRide App
                 </Link>
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                asChild
-              >
+              <Button size="sm" variant="outline" asChild>
                 <Link href="/driver-apply">Become a Driver</Link>
-              </Button>
-              <Button size="sm" variant="secondary" asChild>
-                <Link href="/terms">View Terms</Link>
               </Button>
             </div>
           </div>

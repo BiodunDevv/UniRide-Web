@@ -32,6 +32,7 @@ import {
   BellIcon,
   MapIcon,
   MapPinIcon,
+  Trash2Icon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -60,6 +61,11 @@ const navMain = [
     title: "Users",
     url: "/dashboard/users",
     icon: <UsersIcon />,
+  },
+  {
+    title: "Deletion Requests",
+    url: "/dashboard/account-deletion-requests",
+    icon: <Trash2Icon />,
   },
   {
     title: "Fare Policy",

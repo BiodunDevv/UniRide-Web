@@ -113,6 +113,63 @@ export interface Admin {
   updatedAt: string;
 }
 
+export interface AccountDeletionRequest {
+  id: string;
+  user_id: string;
+  email: string;
+  name: string;
+  role: "user" | "driver";
+  status:
+    | "pending_review"
+    | "scheduled"
+    | "rejected"
+    | "cancelled"
+    | "completed";
+  requested_via: "mobile" | "web_public" | "admin";
+  request_reason: string;
+  reviewed_by?: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
+  reviewed_at?: string | null;
+  review_note?: string;
+  scheduled_for?: string | null;
+  cancelled_at?: string | null;
+  completed_at?: string | null;
+  completion_summary?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  user?: User | null;
+  driver?: Driver | null;
+}
+
+type AdminUserRef = {
+  _id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  profile_picture?: string;
+  createdAt?: string;
+};
+
+type AdminLocationRef = {
+  _id?: string;
+  name?: string;
+  address?: string;
+  short_name?: string;
+};
+
+type AdminDriverRef = {
+  _id?: string;
+  vehicle_model?: string;
+  plate_number?: string;
+  profile_picture?: string;
+  user_id?: AdminUserRef | null;
+};
+
 export interface BroadcastMessage {
   _id: string;
   title: string;
@@ -132,10 +189,10 @@ export interface BroadcastMessage {
 
 export interface AdminRide {
   _id: string;
-  created_by: any;
-  driver_id: any;
-  pickup_location_id: any;
-  destination_id: any;
+  created_by: string | AdminUserRef | null;
+  driver_id: string | AdminDriverRef | null;
+  pickup_location_id: string | AdminLocationRef | null;
+  destination_id: string | AdminLocationRef | null;
   fare: number;
   fare_policy_source: "admin" | "driver" | "distance_auto";
   departure_time: string;
@@ -158,8 +215,14 @@ export interface AdminRide {
 
 export interface AdminBooking {
   _id: string;
-  ride_id: any;
-  user_id: any;
+  ride_id:
+    | string
+    | (AdminRide & {
+        pickup_location_id?: string | AdminLocationRef | null;
+        destination_id?: string | AdminLocationRef | null;
+      })
+    | null;
+  user_id: string | AdminUserRef | null;
   seats_requested: number;
   total_fare: number;
   payment_method: "cash" | "transfer";
@@ -185,6 +248,7 @@ interface AdminState {
   drivers: Driver[];
   users: User[];
   admins: Admin[];
+  accountDeletionRequests: AccountDeletionRequest[];
   farePolicy: FarePolicy | null;
   broadcasts: BroadcastMessage[];
   rides: AdminRide[];
@@ -207,6 +271,12 @@ interface AdminState {
   getUserById: (id: string) => Promise<User>;
   getAllAdmins: () => Promise<void>;
   getAdminById: (id: string) => Promise<Admin>;
+  getAccountDeletionRequests: (status?: string) => Promise<void>;
+  getAccountDeletionRequestById: (
+    id: string,
+  ) => Promise<AccountDeletionRequest>;
+  approveAccountDeletionRequest: (id: string) => Promise<void>;
+  rejectAccountDeletionRequest: (id: string, note: string) => Promise<void>;
   updateAdmin: (id: string, role: "admin" | "super_admin") => Promise<void>;
   deleteAdmin: (id: string, force?: boolean) => Promise<void>;
   deleteUser: (id: string, force?: boolean) => Promise<void>;
@@ -229,7 +299,7 @@ interface AdminState {
     page?: number;
     limit?: number;
   }) => Promise<void>;
-  updateRide: (id: string, updates: Record<string, any>) => Promise<void>;
+  updateRide: (id: string, updates: Record<string, unknown>) => Promise<void>;
   cancelRide: (id: string) => Promise<void>;
   // Bookings
   getAllBookings: (params?: {
@@ -251,6 +321,7 @@ export const useAdminStore = create<AdminState>((set) => ({
   drivers: [],
   users: [],
   admins: [],
+  accountDeletionRequests: [],
   farePolicy: null,
   broadcasts: [],
   rides: [],
@@ -718,6 +789,159 @@ export const useAdminStore = create<AdminState>((set) => ({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An error occurred";
+      set({
+        error: errorMessage,
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  getAccountDeletionRequests: async (status?: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const query = status
+        ? `?status=${encodeURIComponent(status)}`
+        : "";
+      const response = await fetch(
+        `${API_URL}/api/admin/account-deletion-requests${query}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch deletion requests");
+      }
+
+      set({
+        accountDeletionRequests: data.data || [],
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      set({
+        error: errorMessage,
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  getAccountDeletionRequestById: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(
+        `${API_URL}/api/admin/account-deletion-requests/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch deletion request");
+      }
+
+      set({ isLoading: false, error: null });
+      return data.data;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      set({
+        error: errorMessage,
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  approveAccountDeletionRequest: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(
+        `${API_URL}/api/admin/account-deletion-requests/${id}/approve`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to approve deletion request");
+      }
+
+      toast.success("Deletion request approved");
+      set({ isLoading: false, error: null });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+      set({
+        error: errorMessage,
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  rejectAccountDeletionRequest: async (id: string, note: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(
+        `${API_URL}/api/admin/account-deletion-requests/${id}/reject`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ note }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to reject deletion request");
+      }
+
+      toast.success("Deletion request rejected");
+      set({ isLoading: false, error: null });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
       set({
         error: errorMessage,
         isLoading: false,

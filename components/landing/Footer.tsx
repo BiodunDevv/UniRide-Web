@@ -78,6 +78,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/account-deletion"
+                  className="hover:text-primary-foreground transition"
+                >
+                  Delete Account
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/reviews"
                   className="hover:text-primary-foreground transition"
                 >
