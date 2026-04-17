@@ -42,7 +42,6 @@ import { ProfileAvatar } from "@/components/shared/profile-avatar";
 import {
   MapPin,
   Ban,
-  Star,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -98,9 +97,10 @@ function getDriverName(ride: AdminRide): string {
   return "Unknown";
 }
 
-function getLocationShort(loc: any): string {
+function getLocationShort(loc: unknown): string {
   if (typeof loc === "object" && loc) {
-    return loc.short_name || loc.name || "—";
+    const location = loc as { short_name?: string; name?: string };
+    return location.short_name || location.name || "—";
   }
   return "—";
 }
@@ -150,8 +150,6 @@ export function RidesTable({ rides, onCancel }: RidesTableProps) {
             typeof driver === "object"
               ? driver?.user_id?.profile_picture || driver?.vehicle_image
               : undefined;
-          const rating =
-            typeof driver === "object" ? driver?.rating : undefined;
           return (
             <div className="flex items-center gap-2">
               <ProfileAvatar src={avatar} name={name} size="sm" />
