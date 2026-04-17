@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +51,7 @@ function Section({
   );
 }
 
-export default function AccountDeletionPage() {
+function AccountDeletionContent() {
   const searchParams = useSearchParams();
   const defaultIntent =
     searchParams.get("mode") === "cancel" ? "cancel" : "request";
@@ -471,5 +471,23 @@ export default function AccountDeletionPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function AccountDeletionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-linear-to-br from-[#042F40] via-[#063d54] to-[#042F40]">
+          <main className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4 py-8">
+            <div className="border border-white/10 bg-[#042F40]/80 px-6 py-4 text-sm text-white/80 backdrop-blur-sm">
+              Loading account deletion page...
+            </div>
+          </main>
+        </div>
+      }
+    >
+      <AccountDeletionContent />
+    </Suspense>
   );
 }
