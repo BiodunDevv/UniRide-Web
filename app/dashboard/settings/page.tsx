@@ -45,7 +45,6 @@ import {
   Database,
   Globe,
   Plus,
-  Edit,
   ToggleLeft,
 } from "lucide-react";
 
@@ -67,6 +66,7 @@ function DeviceIcon({ type, className }: { type: string; className?: string }) {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/;
 
 function getAuthToken(): string {
   const token = localStorage.getItem("auth-storage");
@@ -973,6 +973,8 @@ function PlatformTab() {
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [mapSyncing, setMapSyncing] = useState(false);
+  const [versionError, setVersionError] = useState<string | null>(null);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -996,10 +998,46 @@ function PlatformTab() {
     if (!settings) return;
     try {
       setSaving(true);
+
+      const normalizedVersion = String(
+        settings.app_version_minimum ?? "",
+      ).trim();
+
+      if (!SEMVER_PATTERN.test(normalizedVersion)) {
+        setVersionError("Use semantic version format like 1.0.0");
+        toast.error("Minimum app version must follow semantic format (x.y.z)");
+        return;
+      }
+
+      const normalizedMaxSeatsRaw = Number(settings.max_seats_per_booking ?? 1);
+      const normalizedMaxSeats = Number.isInteger(normalizedMaxSeatsRaw)
+        ? Math.max(1, Math.min(10, normalizedMaxSeatsRaw))
+        : 1;
+
+      const normalizedMapEnabled = Boolean(
+        (settings.mobile_map_enabled as boolean | undefined) ??
+        settings.expo_maps_enabled,
+      );
+
+      const payload = {
+        ...settings,
+        app_version_minimum: normalizedVersion,
+        max_seats_per_booking: normalizedMaxSeats,
+        mobile_map_enabled: normalizedMapEnabled,
+        expo_maps_enabled: normalizedMapEnabled,
+        mobile_map_provider:
+          settings.mobile_map_provider === "mapbox" ? "mapbox" : "native",
+        mobile_map_3d_enabled: Boolean(settings.mobile_map_3d_enabled),
+        mobile_navigation_enabled: Boolean(settings.mobile_navigation_enabled),
+      };
+
       await authFetch(`${API_URL}/api/platform-settings`, {
         method: "PATCH",
-        body: JSON.stringify(settings),
+        body: JSON.stringify(payload),
       });
+
+      setSettings(payload);
+      setVersionError(null);
       toast.success("Platform settings updated");
       fetchSettings();
     } catch (err: unknown) {
@@ -1012,8 +1050,89 @@ function PlatformTab() {
   };
 
   const updateField = (key: string, value: unknown) => {
+    if (key === "app_version_minimum") {
+      setVersionError(null);
+    }
     setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
+
+  const buildMapPayload = useCallback((source: Record<string, unknown>) => {
+    const normalizedMapEnabled = Boolean(
+      (source.mobile_map_enabled as boolean | undefined) ??
+        source.expo_maps_enabled,
+    );
+
+    return {
+      mobile_map_enabled: normalizedMapEnabled,
+      expo_maps_enabled: normalizedMapEnabled,
+      mobile_map_provider:
+        source.mobile_map_provider === "mapbox" ? "mapbox" : "native",
+      mobile_map_3d_enabled: Boolean(source.mobile_map_3d_enabled),
+      mobile_navigation_enabled: Boolean(source.mobile_navigation_enabled),
+    };
+  }, []);
+
+  const saveMapSettings = useCallback(
+    async (nextSettings: Record<string, unknown>) => {
+      const mapPayload = buildMapPayload(nextSettings);
+
+      try {
+        setMapSyncing(true);
+        const data = await authFetch(`${API_URL}/api/platform-settings`, {
+          method: "PATCH",
+          body: JSON.stringify(mapPayload),
+        });
+
+        if (data?.data) {
+          setSettings((prev) => (prev ? { ...prev, ...data.data } : prev));
+        } else {
+          setSettings((prev) => (prev ? { ...prev, ...mapPayload } : prev));
+        }
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to sync map settings",
+        );
+        fetchSettings();
+      } finally {
+        setMapSyncing(false);
+      }
+    },
+    [buildMapPayload, fetchSettings],
+  );
+
+  const updateMapFieldAndSync = useCallback(
+    (
+      key:
+        | "mobile_map_enabled"
+        | "mobile_map_provider"
+        | "mobile_map_3d_enabled"
+        | "mobile_navigation_enabled",
+      value: unknown,
+    ) => {
+      if (!settings) return;
+
+      const nextSettings: Record<string, unknown> = {
+        ...settings,
+        [key]: value,
+      };
+
+      if (key === "mobile_map_enabled") {
+        const enabled = Boolean(value);
+        nextSettings.mobile_map_enabled = enabled;
+        nextSettings.expo_maps_enabled = enabled;
+      }
+
+      const normalizedMapSettings = buildMapPayload(nextSettings);
+      const optimistic = {
+        ...nextSettings,
+        ...normalizedMapSettings,
+      };
+
+      setSettings(optimistic);
+      void saveMapSettings(optimistic);
+    },
+    [buildMapPayload, saveMapSettings, settings],
+  );
 
   if (loading) {
     return (
@@ -1031,6 +1150,41 @@ function PlatformTab() {
     );
   }
 
+  const mobileMapEnabled = Boolean(
+    (settings.mobile_map_enabled as boolean | undefined) ??
+    settings.expo_maps_enabled,
+  );
+  const mobileMapProvider =
+    settings.mobile_map_provider === "mapbox" ? "mapbox" : "native";
+  const bumpVersion = (mode: "major" | "minor" | "patch") => {
+    const current = String(settings.app_version_minimum ?? "1.0.0").trim();
+    const match = current.match(/^(\d+)\.(\d+)\.(\d+)$/);
+
+    let major = 1;
+    let minor = 0;
+    let patch = 0;
+
+    if (match) {
+      major = Number(match[1]);
+      minor = Number(match[2]);
+      patch = Number(match[3]);
+    }
+
+    if (mode === "major") {
+      major += 1;
+      minor = 0;
+      patch = 0;
+    } else if (mode === "minor") {
+      minor += 1;
+      patch = 0;
+    } else {
+      patch += 1;
+    }
+
+    updateField("app_version_minimum", `${major}.${minor}.${patch}`);
+    setVersionError(null);
+  };
+
   return (
     <div className="space-y-4">
       {/* Mobile Maps */}
@@ -1041,24 +1195,95 @@ function PlatformTab() {
             Mobile Maps
           </CardTitle>
           <CardDescription className="text-xs">
-            Control whether the mobile apps render interactive Expo Maps. When
-            turned off, rider and driver trip screens fall back to read-only
-            operational panels instead of breaking the app.
+            Control map canvas availability, provider rollout, and advanced
+            mobile navigation toggles.
           </CardDescription>
+          <p className="text-[10px] text-muted-foreground">
+            Changes in this section sync immediately to mobile clients.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-xl border bg-muted/30 p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
-                <Label className="text-xs">Enable Expo Maps</Label>
+                <Label className="text-xs">Enable Mobile Map Canvas</Label>
                 <p className="text-[10px] text-muted-foreground">
-                  Powers the interactive mobile map canvas using native Apple
-                  and Google maps.
+                  Global kill switch for interactive map rendering on rider and
+                  driver apps.
                 </p>
               </div>
               <Switch
-                checked={!!settings.expo_maps_enabled}
-                onCheckedChange={(v) => updateField("expo_maps_enabled", v)}
+                checked={mobileMapEnabled}
+                onCheckedChange={(v) =>
+                  updateMapFieldAndSync("mobile_map_enabled", v)
+                }
+                disabled={mapSyncing}
+              />
+            </div>
+          </div>
+          <div className="rounded-xl border p-4">
+            <div className="space-y-1">
+              <Label className="text-xs">Mobile Map Provider</Label>
+              <p className="text-[10px] text-muted-foreground">
+                Select preferred provider for phased rollout. Current native
+                canvas remains as crash-safe fallback.
+              </p>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant={mobileMapProvider === "native" ? "default" : "outline"}
+                className="text-xs"
+                onClick={() =>
+                  updateMapFieldAndSync("mobile_map_provider", "native")
+                }
+                disabled={mapSyncing}
+              >
+                Native
+              </Button>
+              <Button
+                size="sm"
+                variant={mobileMapProvider === "mapbox" ? "default" : "outline"}
+                className="text-xs"
+                onClick={() =>
+                  updateMapFieldAndSync("mobile_map_provider", "mapbox")
+                }
+                disabled={mapSyncing}
+              >
+                Mapbox
+              </Button>
+            </div>
+          </div>
+          <div className="rounded-xl border p-4 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label className="text-xs">Enable 3D Map Mode</Label>
+                <p className="text-[10px] text-muted-foreground">
+                  Allows 3D map styling where supported by the active provider.
+                </p>
+              </div>
+              <Switch
+                checked={!!settings.mobile_map_3d_enabled}
+                onCheckedChange={(v) =>
+                  updateMapFieldAndSync("mobile_map_3d_enabled", v)
+                }
+                disabled={mapSyncing}
+              />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label className="text-xs">Enable In-App Navigation SDK</Label>
+                <p className="text-[10px] text-muted-foreground">
+                  Toggles native turn-by-turn navigation bridge for mobile.
+                </p>
+              </div>
+              <Switch
+                checked={!!settings.mobile_navigation_enabled}
+                onCheckedChange={(v) =>
+                  updateMapFieldAndSync("mobile_navigation_enabled", v)
+                }
+                disabled={mapSyncing}
               />
             </div>
           </div>
@@ -1067,9 +1292,9 @@ function PlatformTab() {
               Graceful fallback behavior
             </p>
             <p className="mt-1 text-[10px] leading-5 text-muted-foreground">
-              Even when this switch is off, mobile users can still open trip
-              screens, review route summaries, complete check-ins, and manage
-              live ride actions without an interactive map canvas.
+              Even when map canvas is disabled or unavailable, mobile users can
+              still open trip screens, review route summaries, complete
+              check-ins, and manage live ride actions.
             </p>
           </div>
         </CardContent>
@@ -1184,15 +1409,54 @@ function PlatformTab() {
                 Force users to update below this version
               </p>
             </div>
-            <Input
-              type="text"
-              className="w-24 h-8 text-xs"
-              value={(settings.app_version_minimum as string) ?? ""}
-              onChange={(e) =>
-                updateField("app_version_minimum", e.target.value)
-              }
-            />
+            <div className="flex flex-col items-end gap-2">
+              <Input
+                type="text"
+                className="w-28 h-8 text-xs"
+                placeholder="1.0.0"
+                value={(settings.app_version_minimum as string) ?? ""}
+                onChange={(e) =>
+                  updateField("app_version_minimum", e.target.value)
+                }
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-[10px]"
+                  onClick={() => bumpVersion("patch")}
+                >
+                  + Patch
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-[10px]"
+                  onClick={() => bumpVersion("minor")}
+                >
+                  + Minor
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-[10px]"
+                  onClick={() => bumpVersion("major")}
+                >
+                  + Major
+                </Button>
+              </div>
+            </div>
           </div>
+          {versionError ? (
+            <p className="text-[10px] text-destructive">{versionError}</p>
+          ) : (
+            <p className="text-[10px] text-muted-foreground">
+              Use semantic versioning format: major.minor.patch (example 1.2.3)
+            </p>
+          )}
         </CardContent>
       </Card>
 
