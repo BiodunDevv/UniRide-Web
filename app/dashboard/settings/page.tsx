@@ -46,6 +46,8 @@ import {
   Globe,
   Plus,
   ToggleLeft,
+  Mail,
+  Phone,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -1014,6 +1016,23 @@ function PlatformTab() {
         ? Math.max(1, Math.min(10, normalizedMaxSeatsRaw))
         : 1;
 
+      const normalizedSupportEmail = String(settings.support_email ?? "")
+        .trim()
+        .toLowerCase();
+      const normalizedSupportPhone = String(
+        settings.support_phone ?? "",
+      ).trim();
+
+      if (!/^\S+@\S+\.\S+$/.test(normalizedSupportEmail)) {
+        toast.error("Support email must be a valid email address");
+        return;
+      }
+
+      if (!normalizedSupportPhone) {
+        toast.error("Support phone cannot be empty");
+        return;
+      }
+
       const normalizedMapEnabled = Boolean(
         (settings.mobile_map_enabled as boolean | undefined) ??
         settings.expo_maps_enabled,
@@ -1029,6 +1048,8 @@ function PlatformTab() {
           settings.mobile_map_provider === "mapbox" ? "mapbox" : "native",
         mobile_map_3d_enabled: Boolean(settings.mobile_map_3d_enabled),
         mobile_navigation_enabled: Boolean(settings.mobile_navigation_enabled),
+        support_email: normalizedSupportEmail,
+        support_phone: normalizedSupportPhone,
       };
 
       await authFetch(`${API_URL}/api/platform-settings`, {
@@ -1059,7 +1080,7 @@ function PlatformTab() {
   const buildMapPayload = useCallback((source: Record<string, unknown>) => {
     const normalizedMapEnabled = Boolean(
       (source.mobile_map_enabled as boolean | undefined) ??
-        source.expo_maps_enabled,
+      source.expo_maps_enabled,
     );
 
     return {
@@ -1457,6 +1478,48 @@ function PlatformTab() {
               Use semantic versioning format: major.minor.patch (example 1.2.3)
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Support Contacts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Support Contacts
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Contact details used by landing pages, terms, support surfaces, and
+            email notifications.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5" />
+              Support Email
+            </Label>
+            <Input
+              type="email"
+              className="h-8 text-xs"
+              placeholder="support@uniride.ng"
+              value={String(settings.support_email ?? "support@uniride.ng")}
+              onChange={(e) => updateField("support_email", e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-2">
+              <Phone className="h-3.5 w-3.5" />
+              Support Phone
+            </Label>
+            <Input
+              type="text"
+              className="h-8 text-xs"
+              placeholder="+234 (0) 800-UNIRIDE"
+              value={String(settings.support_phone ?? "+234 (0) 800-UNIRIDE")}
+              onChange={(e) => updateField("support_phone", e.target.value)}
+            />
+          </div>
         </CardContent>
       </Card>
 

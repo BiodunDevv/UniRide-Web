@@ -26,6 +26,18 @@ export function NavSecondary({
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const { isMobile, setOpenMobile } = useSidebar();
 
+  const normalizedPath = (currentPath || "").replace(/\/+$/, "") || "/";
+  const activeUrl =
+    items
+      .filter((item) => {
+        const normalizedUrl = item.url.replace(/\/+$/, "") || "/";
+        return (
+          normalizedPath === normalizedUrl ||
+          normalizedPath.startsWith(`${normalizedUrl}/`)
+        );
+      })
+      .sort((a, b) => b.url.length - a.url.length)[0]?.url || null;
+
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
   };
@@ -35,9 +47,7 @@ export function NavSecondary({
       <SidebarGroupContent>
         <SidebarMenu className="flex flex-col gap-1">
           {items.map((item) => {
-            const isActive =
-              currentPath === item.url ||
-              currentPath?.startsWith(item.url + "/");
+            const isActive = activeUrl === item.url;
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton

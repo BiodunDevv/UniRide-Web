@@ -264,7 +264,7 @@ export default function DriverDetailPage({
             />
             <div>
               <h1 className="text-base font-semibold leading-tight">
-                {driver.user_id?.name ?? "Unknown Driver"}
+                {driver.user_id?.name ?? "Driver Profile Pending"}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
                 {(() => {
@@ -427,7 +427,7 @@ export default function DriverDetailPage({
                 <Hash className="h-3 w-3" /> Name
               </span>
               <span className="text-xs font-medium">
-                {driver.user_id?.name ?? "Unknown"}
+                {driver.user_id?.name ?? "Driver Profile Pending"}
               </span>
             </div>
             <Separator />
@@ -887,14 +887,14 @@ export default function DriverDetailPage({
                   ride.pickup_location_id
                     ? ride.pickup_location_id.name ||
                       ride.pickup_location_id.address ||
-                      "Unknown"
-                    : "Unknown";
+                      "Route point"
+                    : "Route point";
                 const dest =
                   typeof ride.destination_id === "object" && ride.destination_id
                     ? ride.destination_id.name ||
                       ride.destination_id.address ||
-                      "Unknown"
-                    : "Unknown";
+                      "Route point"
+                    : "Route point";
 
                 const statusStyles: Record<string, string> = {
                   scheduled: "bg-blue-50 text-blue-700 border-blue-200",

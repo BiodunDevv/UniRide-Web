@@ -79,6 +79,11 @@ function formatDate(d: string) {
   });
 }
 
+function formatDateSafe(value?: string) {
+  if (!value) return "";
+  return formatDate(value);
+}
+
 function getLocationName(loc: any): string {
   if (!loc) return "—";
   if (typeof loc === "string") return loc;
@@ -102,7 +107,7 @@ export function BookingDetailDrawer({
 
   const user = booking.user_id;
   const userName =
-    typeof user === "object" ? (user?.name ?? "Unknown") : "Unknown";
+    typeof user === "object" ? (user?.name ?? "Passenger") : "Passenger";
   const userEmail = typeof user === "object" ? user?.email : undefined;
   const userPhone = typeof user === "object" ? user?.phone : undefined;
   const userAvatar =
@@ -119,6 +124,86 @@ export function BookingDetailDrawer({
       : "—";
   const rideDepartureTime =
     ride && typeof ride === "object" ? ride.departure_time : undefined;
+  const ridePassengers = booking.ride_passengers || [];
+  const assignedDriverName =
+    ride &&
+    typeof ride === "object" &&
+    ride.driver_id &&
+    typeof ride.driver_id === "object"
+      ? ride.driver_id.user_id?.name || "Assigned Driver"
+      : "Awaiting Driver Assignment";
+
+  const timelineItems: Array<{
+    id: string;
+    label: string;
+    detail?: string;
+    time?: string;
+    tone?: "default" | "success" | "danger";
+  }> = [
+    {
+      id: "booking-created",
+      label: "Booking requested",
+      detail: `${pickupName} → ${destName}`,
+      time: booking.booking_time || booking.createdAt,
+      tone: "success",
+    },
+  ];
+
+  if (ridePassengers.length > 0) {
+    timelineItems.push({
+      id: "ride-passengers",
+      label: "Ride participants",
+      detail: `${ridePassengers.length} passenger${ridePassengers.length === 1 ? "" : "s"} currently on this route`,
+      time: ridePassengers[0]?.booking_time || ridePassengers[0]?.createdAt,
+      tone: "success",
+    });
+  }
+
+  if (["accepted", "in_progress", "completed"].includes(booking.status)) {
+    timelineItems.push({
+      id: "accepted",
+      label: "Booking accepted",
+      detail: `Driver: ${assignedDriverName}`,
+      time: booking.updatedAt,
+      tone: "success",
+    });
+  }
+
+  if (booking.check_in_status === "checked_in") {
+    timelineItems.push({
+      id: "checked-in",
+      label: "Passenger checked in",
+      detail: "Passenger verified boarding code",
+      time: booking.updatedAt,
+      tone: "success",
+    });
+  }
+
+  if (booking.status === "completed") {
+    timelineItems.push({
+      id: "completed",
+      label: "Session completed",
+      detail: "Ride and booking completed successfully",
+      time:
+        ride && typeof ride === "object"
+          ? ride.ended_at || booking.updatedAt
+          : booking.updatedAt,
+      tone: "success",
+    });
+  }
+
+  if (["declined", "cancelled"].includes(booking.status)) {
+    timelineItems.push({
+      id: "cancelled-or-declined",
+      label:
+        booking.status === "declined"
+          ? "Booking declined"
+          : "Booking cancelled",
+      detail: booking.admin_note || "No additional note provided",
+      time: booking.updatedAt,
+      tone: "danger",
+    });
+  }
 
   const status = statusStyles[booking.status] || {
     variant: "secondary" as const,
@@ -219,6 +304,76 @@ export function BookingDetailDrawer({
                 Seats Requested
               </p>
             </div>
+          </div>
+
+          {/* Joined Passengers */}
+          <div className="rounded-lg border p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-900">
+                Ride Passengers
+              </p>
+              <Badge variant="secondary" className="text-[10px]">
+                {ridePassengers.length}
+              </Badge>
+            </div>
+
+            {ridePassengers.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">
+                No passengers are currently linked to this ride.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {ridePassengers.slice(0, 8).map((passenger) => {
+                  const passengerName =
+                    passenger.name || passenger.passenger_name || "Passenger";
+                  const isCurrentBooking =
+                    passenger.booking_id &&
+                    passenger.booking_id === booking._id;
+
+                  return (
+                    <div
+                      key={
+                        passenger.booking_id ||
+                        `${passengerName}-${passenger.createdAt}`
+                      }
+                      className={`flex items-center justify-between rounded-md border px-2.5 py-2 ${
+                        isCurrentBooking
+                          ? "border-blue-100 bg-blue-50"
+                          : "border-slate-200 bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <ProfileAvatar
+                          src={passenger.profile_picture || undefined}
+                          name={passengerName}
+                          size="sm"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-slate-900 truncate">
+                            {isCurrentBooking
+                              ? `${passengerName} (this booking)`
+                              : passengerName}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {passenger.seats_requested || 1} seat
+                            {(passenger.seats_requested || 1) > 1 ? "s" : ""}
+                            {passenger.check_in_status === "checked_in"
+                              ? " · Checked in"
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] capitalize"
+                      >
+                        {(passenger.status || "pending").replace("_", " ")}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Details */}
@@ -323,6 +478,50 @@ export function BookingDetailDrawer({
               <p className="text-xs text-amber-800">{booking.admin_note}</p>
             </div>
           )}
+
+          {/* Session Timeline */}
+          <div className="rounded-lg border p-3">
+            <p className="text-xs font-semibold text-slate-900 mb-2">
+              Session Timeline
+            </p>
+            <div className="space-y-3">
+              {timelineItems.map((item, index) => (
+                <div key={item.id} className="flex gap-2.5">
+                  <div className="flex flex-col items-center pt-1">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        item.tone === "danger"
+                          ? "bg-red-500"
+                          : item.tone === "success"
+                            ? "bg-emerald-500"
+                            : "bg-slate-400"
+                      }`}
+                    />
+                    {index < timelineItems.length - 1 && (
+                      <span className="mt-1 h-full min-h-4 w-px bg-border" />
+                    )}
+                  </div>
+                  <div className="flex-1 pb-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-medium text-slate-900">
+                        {item.label}
+                      </p>
+                      {item.time ? (
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDateSafe(item.time)}
+                        </span>
+                      ) : null}
+                    </div>
+                    {item.detail ? (
+                      <p className="mt-0.5 text-[10px] text-muted-foreground">
+                        {item.detail}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <DrawerFooter>

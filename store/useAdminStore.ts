@@ -175,6 +175,28 @@ type AdminDriverRef = {
   user_id?: AdminUserRef | null;
 };
 
+type AdminRidePassengerRef = {
+  booking_id?: string;
+  user_id?: string | null;
+  name?: string;
+  passenger_name?: string;
+  phone?: string | null;
+  passenger_phone?: string | null;
+  profile_picture?: string | null;
+  seats_requested?: number;
+  status?:
+    | "pending"
+    | "accepted"
+    | "declined"
+    | "in_progress"
+    | "completed"
+    | "cancelled";
+  check_in_status?: "not_checked_in" | "checked_in";
+  payment_status?: "pending" | "sent" | "paid" | "not_applicable";
+  booking_time?: string;
+  createdAt?: string;
+};
+
 export interface BroadcastMessage {
   _id: string;
   title: string;
@@ -214,6 +236,13 @@ export interface AdminRide {
   distance_meters?: number;
   duration_seconds?: number;
   ended_at?: string;
+  cancelled_at?: string;
+  cancel_reason?: string;
+  cancelled_by?: string | AdminUserRef | null;
+  participants?: AdminRidePassengerRef[];
+  participant_count?: number;
+  active_participant_count?: number;
+  checked_in_count?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -244,6 +273,7 @@ export interface AdminBooking {
   rating?: number;
   feedback?: string;
   admin_note?: string;
+  ride_passengers?: AdminRidePassengerRef[];
   createdAt: string;
   updatedAt: string;
 }
@@ -305,7 +335,7 @@ interface AdminState {
     limit?: number;
   }) => Promise<void>;
   updateRide: (id: string, updates: Record<string, unknown>) => Promise<void>;
-  cancelRide: (id: string) => Promise<void>;
+  cancelRide: (id: string, reason?: string) => Promise<void>;
   // Bookings
   getAllBookings: (params?: {
     status?: string;
@@ -808,9 +838,7 @@ export const useAdminStore = create<AdminState>((set) => ({
       const token = useAuthStore.getState().token;
       if (!token) throw new Error("Not authenticated");
 
-      const query = status
-        ? `?status=${encodeURIComponent(status)}`
-        : "";
+      const query = status ? `?status=${encodeURIComponent(status)}` : "";
       const response = await fetch(
         `${API_URL}/api/admin/account-deletion-requests${query}`,
         {
@@ -1401,7 +1429,7 @@ export const useAdminStore = create<AdminState>((set) => ({
     }
   },
 
-  cancelRide: async (id) => {
+  cancelRide: async (id, reason) => {
     set({ isLoading: true, error: null });
     try {
       const token = useAuthStore.getState().token;
@@ -1413,6 +1441,9 @@ export const useAdminStore = create<AdminState>((set) => ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(
+          reason && reason.trim().length > 0 ? { reason: reason.trim() } : {},
+        ),
       });
       const data = await response.json();
       if (!response.ok)

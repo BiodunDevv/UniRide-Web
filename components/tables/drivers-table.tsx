@@ -89,7 +89,7 @@ export function DriversTable({
         enableHiding: false,
       },
       {
-        accessorFn: (row) => row.user_id?.name ?? "Unknown",
+        accessorFn: (row) => row.user_id?.name ?? "Driver profile pending",
         id: "name",
         header: "Driver",
         cell: ({ row }) => (

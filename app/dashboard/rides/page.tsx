@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useAdminStore, type AdminRide } from "@/store/useAdminStore";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -55,6 +57,7 @@ export default function RidesPage() {
   const [limit] = useState(50);
   const [cancelTarget, setCancelTarget] = useState<AdminRide | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const fetchRides = useCallback(() => {
     getAllRides({
@@ -83,7 +86,9 @@ export default function RidesPage() {
               r.driver_id.vehicle_model ||
               ""
             ).toLowerCase()
-          : "";
+          : typeof r.created_by === "object" && r.created_by
+            ? (r.created_by.name || "").toLowerCase()
+            : "";
       const pickup =
         typeof r.pickup_location_id === "object" && r.pickup_location_id
           ? (
@@ -113,8 +118,9 @@ export default function RidesPage() {
     if (!cancelTarget) return;
     setCancelling(true);
     try {
-      await cancelRide(cancelTarget._id);
+      await cancelRide(cancelTarget._id, cancelReason || undefined);
       setCancelTarget(null);
+      setCancelReason("");
       fetchRides();
     } catch {
       // toast handled in store
@@ -205,20 +211,40 @@ export default function RidesPage() {
       {/* Cancel Confirmation Dialog */}
       <Dialog
         open={!!cancelTarget}
-        onOpenChange={(open) => !open && setCancelTarget(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCancelTarget(null);
+            setCancelReason("");
+          }
+        }}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Cancel Ride</DialogTitle>
             <DialogDescription>
               Are you sure you want to cancel this ride? This will notify the
-              driver and any booked passengers.
+              driver and all joined passengers.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-2 py-1">
+            <Label htmlFor="ride-cancel-reason" className="text-sm">
+              Cancellation reason (optional)
+            </Label>
+            <Textarea
+              id="ride-cancel-reason"
+              rows={3}
+              value={cancelReason}
+              onChange={(event) => setCancelReason(event.target.value)}
+              placeholder="Share context for support logs and passenger communication…"
+            />
+          </div>
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
-              onClick={() => setCancelTarget(null)}
+              onClick={() => {
+                setCancelTarget(null);
+                setCancelReason("");
+              }}
               disabled={cancelling}
             >
               Keep Ride

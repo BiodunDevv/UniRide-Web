@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { useSupportContact } from "@/hooks/use-support-contact";
 
 // ─── Shared Header ────────────────────────────────────────────────────────────
 function PageHeader({ subtitle }: { subtitle?: string }) {
@@ -73,6 +74,8 @@ function PageHeader({ subtitle }: { subtitle?: string }) {
 
 // ─── Shared Footer ────────────────────────────────────────────────────────────
 function PageFooter() {
+  const { supportMailto } = useSupportContact();
+
   return (
     <footer className="mt-auto pt-8 pb-6 px-4">
       <div className="max-w-3xl mx-auto">
@@ -91,7 +94,7 @@ function PageFooter() {
             </Link>
             <span className="text-white/20">·</span>
             <a
-              href="mailto:support@uniride.ng"
+              href={supportMailto}
               className="hover:text-white/70 transition-colors flex items-center gap-1"
             >
               Support
@@ -178,7 +181,7 @@ function TimelineItem({
               : "text-gray-300"
         }`}
       >
-$15
+        $15
       </span>
     </div>
   );
@@ -288,9 +291,9 @@ export default function APISubscriptionPage() {
               </div>
               <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
                 UniRide is a real-time campus ride-hailing application — similar
-                to Uber or Bolt — built as a final year Computer Science project.
-                The following core features depend on mapping, routing, and live
-                location services and cannot function without them:
+                to Uber or Bolt — built as a final year Computer Science
+                project. The following core features depend on mapping, routing,
+                and live location services and cannot function without them:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <FeatureCard
@@ -545,9 +548,7 @@ export default function APISubscriptionPage() {
                   </div>
 
                   {/* HERE Maps */}
-                  <div className="p-3 text-muted-foreground">
-                    HERE Maps API
-                  </div>
+                  <div className="p-3 text-muted-foreground">HERE Maps API</div>
                   <div className="p-3 text-muted-foreground text-center">
                     ~$49+
                   </div>
@@ -570,11 +571,11 @@ export default function APISubscriptionPage() {
               </AlertTitle>
               <AlertDescription className="text-green-800 text-xs leading-relaxed">
                 A total investment of{" "}
-                <span className="font-bold">${TOTAL}</span> (
-                ${MONTHLY_PRICE}/month × {MONTHS} months) enables all
-                mapping, navigation, and location features required for the
-                UniRide final year project. This keeps the mapping budget clear
-                while allowing the product to stay flexible about providers.
+                <span className="font-bold">${TOTAL}</span> ( ${MONTHLY_PRICE}
+                /month × {MONTHS} months) enables all mapping, navigation, and
+                location features required for the UniRide final year project.
+                This keeps the mapping budget clear while allowing the product
+                to stay flexible about providers.
               </AlertDescription>
             </Alert>
 

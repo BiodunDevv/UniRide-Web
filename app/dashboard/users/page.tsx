@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { UsersTable } from "@/components/tables/users-table";
 import { DeleteConfirmModal } from "@/components/modals/delete-confirm-modal";
 import {
@@ -16,7 +18,7 @@ import {
   SearchInput,
   LoadingState,
 } from "@/components/shared";
-import { Users, Flag } from "lucide-react";
+import { Users, Flag, Database, AlertTriangle } from "lucide-react";
 import { useAdminStore } from "@/store/useAdminStore";
 import type { User } from "@/store/useAdminStore";
 
@@ -73,6 +75,21 @@ export default function UsersPage() {
         title="Users"
         description="Manage registered riders and passengers"
       />
+
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button asChild size="sm" variant="outline" className="text-xs">
+          <Link href="/dashboard/users/cancellation-risk">
+            <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+            Cancellation Risk
+          </Link>
+        </Button>
+        <Button asChild size="sm" className="text-xs">
+          <Link href="/dashboard/users/data-tools">
+            <Database className="h-3.5 w-3.5 mr-1.5" />
+            User Data Tools
+          </Link>
+        </Button>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <StatsCard icon={Users} value={users.length} label="Total Users" />

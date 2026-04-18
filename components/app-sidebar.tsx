@@ -33,6 +33,8 @@ import {
   MapIcon,
   MapPinIcon,
   Trash2Icon,
+  DatabaseIcon,
+  AlertTriangleIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -61,6 +63,16 @@ const navMain = [
     title: "Users",
     url: "/dashboard/users",
     icon: <UsersIcon />,
+  },
+  {
+    title: "User Data Tools",
+    url: "/dashboard/users/data-tools",
+    icon: <DatabaseIcon />,
+  },
+  {
+    title: "Cancellation Risk",
+    url: "/dashboard/users/cancellation-risk",
+    icon: <AlertTriangleIcon />,
   },
   {
     title: "Deletion Requests",

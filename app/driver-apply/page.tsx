@@ -35,6 +35,7 @@ import {
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import Image from "next/image";
+import { useSupportContact } from "@/hooks/use-support-contact";
 
 // ─── Shared Header ────────────────────────────────────────────────────────────
 function PageHeader({ subtitle }: { subtitle?: string }) {
@@ -82,6 +83,8 @@ function PageHeader({ subtitle }: { subtitle?: string }) {
 
 // ─── Shared Footer ────────────────────────────────────────────────────────────
 function PageFooter() {
+  const { supportMailto } = useSupportContact();
+
   return (
     <footer className="mt-auto pt-8 pb-6 px-4">
       <div className="max-w-2xl mx-auto">
@@ -100,7 +103,7 @@ function PageFooter() {
             </Link>
             <span className="text-white/20">·</span>
             <a
-              href="mailto:support@uniride.ng"
+              href={supportMailto}
               className="hover:text-white/70 transition-colors flex items-center gap-1"
             >
               Support

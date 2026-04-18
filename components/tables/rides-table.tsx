@@ -93,8 +93,28 @@ const statusStyles: Record<
 
 function getDriverName(ride: AdminRide): string {
   const d = ride.driver_id;
-  if (typeof d === "object" && d) return d.user_id?.name ?? "Unknown";
-  return "Unknown";
+  if (typeof d === "object" && d) {
+    return d.user_id?.name ?? "Assigned Driver";
+  }
+
+  if (typeof d === "string" && d.trim().length > 0) {
+    return "Assigned Driver";
+  }
+
+  if (["scheduled", "available"].includes(ride.status)) {
+    return "Awaiting Driver Assignment";
+  }
+
+  return "Driver Unavailable";
+}
+
+function getRequesterName(ride: AdminRide): string {
+  const creator = ride.created_by;
+  if (creator && typeof creator === "object") {
+    return creator.name || "Passenger";
+  }
+
+  return "Passenger";
 }
 
 function getLocationShort(loc: unknown): string {
@@ -144,12 +164,19 @@ export function RidesTable({ rides, onCancel }: RidesTableProps) {
           const ride = row.original;
           const driver = ride.driver_id;
           const name = getDriverName(ride);
+          const hasAssignedDriver = Boolean(
+            (typeof driver === "object" && driver) ||
+            (typeof driver === "string" && driver.trim().length > 0),
+          );
           const vehicle =
             typeof driver === "object" ? driver?.vehicle_model : undefined;
+          const requesterName = getRequesterName(ride);
           const avatar =
             typeof driver === "object"
               ? driver?.user_id?.profile_picture || driver?.vehicle_image
-              : undefined;
+              : typeof ride.created_by === "object"
+                ? ride.created_by?.profile_picture
+                : undefined;
           return (
             <div className="flex items-center gap-2">
               <ProfileAvatar src={avatar} name={name} size="sm" />
@@ -166,16 +193,55 @@ export function RidesTable({ rides, onCancel }: RidesTableProps) {
                     </Button>
                   }
                 />
-                {vehicle && (
+                {vehicle ? (
                   <p className="text-[10px] text-muted-foreground truncate">
                     {vehicle}
                   </p>
-                )}
+                ) : !hasAssignedDriver ? (
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    Requested by {requesterName}
+                  </p>
+                ) : null}
               </div>
             </div>
           );
         },
         enableHiding: false,
+      },
+      {
+        id: "passengers",
+        header: "Passengers",
+        accessorFn: (row) => row.active_participant_count ?? row.booked_seats,
+        cell: ({ row }) => {
+          const ride = row.original;
+          const participants = ride.participants || [];
+          const activeCount =
+            ride.active_participant_count ??
+            participants.filter((participant) =>
+              ["pending", "accepted", "in_progress"].includes(
+                participant.status || "",
+              ),
+            ).length ??
+            ride.booked_seats;
+          const names = participants
+            .slice(0, 2)
+            .map(
+              (participant) => participant.passenger_name || participant.name,
+            )
+            .filter(Boolean)
+            .join(", ");
+
+          return (
+            <div className="min-w-32.5">
+              <p className="text-xs font-semibold text-slate-900">
+                {activeCount} joined
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {names || "No passengers yet"}
+              </p>
+            </div>
+          );
+        },
       },
       {
         id: "route",
@@ -186,14 +252,14 @@ export function RidesTable({ rides, onCancel }: RidesTableProps) {
           <div className="flex items-center gap-1.5 text-xs">
             <div className="flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
-              <span className="truncate max-w-[80px]">
+              <span className="truncate max-w-20">
                 {getLocationShort(row.original.pickup_location_id)}
               </span>
             </div>
             <span className="text-muted-foreground">→</span>
             <div className="flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
-              <span className="truncate max-w-[80px]">
+              <span className="truncate max-w-20">
                 {getLocationShort(row.original.destination_id)}
               </span>
             </div>

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Mail, Shield, Trash2, Clock3 } from "lucide-react";
 import { toast } from "sonner";
+import { useSupportContact } from "@/hooks/use-support-contact";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -46,7 +47,9 @@ function Section({
   return (
     <section className="space-y-3">
       <h2 className="text-base font-semibold text-[#042F40]">{title}</h2>
-      <div className="space-y-2 text-sm leading-6 text-slate-600">{children}</div>
+      <div className="space-y-2 text-sm leading-6 text-slate-600">
+        {children}
+      </div>
     </section>
   );
 }
@@ -63,6 +66,7 @@ function AccountDeletionContent() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [result, setResult] = useState<DeletionResult | null>(null);
+  const { supportEmail, supportPhone } = useSupportContact();
 
   const stepCopy = useMemo(
     () =>
@@ -95,14 +99,17 @@ function AccountDeletionContent() {
     clearMessages();
     setSendingCode(true);
     try {
-      const response = await fetch(`${API_URL}/api/account-deletion/request-code`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: form.email.trim(),
-          intent,
-        }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/account-deletion/request-code`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: form.email.trim(),
+            intent,
+          }),
+        },
+      );
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Failed to send verification code");
@@ -123,15 +130,18 @@ function AccountDeletionContent() {
     clearMessages();
     setVerifyingCode(true);
     try {
-      const response = await fetch(`${API_URL}/api/account-deletion/verify-code`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: form.email.trim(),
-          code: form.code.trim(),
-          intent,
-        }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/account-deletion/verify-code`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: form.email.trim(),
+            code: form.code.trim(),
+            intent,
+          }),
+        },
+      );
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Failed to verify code");
@@ -208,7 +218,9 @@ function AccountDeletionContent() {
           <div className="flex items-center justify-between border border-white/10 bg-[#042F40]/90 px-4 py-3 backdrop-blur-sm">
             <Link href="/" className="flex items-center gap-2.5">
               <Logo className="h-auto w-7" variant="light" />
-              <span className="text-base font-semibold text-white">UniRide</span>
+              <span className="text-base font-semibold text-white">
+                UniRide
+              </span>
             </Link>
             <Link
               href="/"
@@ -231,8 +243,8 @@ function AccountDeletionContent() {
                 </h1>
                 <p className="max-w-2xl text-sm leading-6 text-slate-200">
                   This page lets UniRide riders and drivers request deletion of
-                  their account and associated personal data, or cancel a pending
-                  deletion request before the scheduled deletion date.
+                  their account and associated personal data, or cancel a
+                  pending deletion request before the scheduled deletion date.
                 </p>
               </div>
               {/* <Badge
@@ -259,9 +271,18 @@ function AccountDeletionContent() {
               <Section title="What UniRide deletes">
                 <ul className="space-y-2 pl-5 list-disc">
                   <li>Your UniRide account profile and login access.</li>
-                  <li>Linked devices, notification preferences, and support access.</li>
-                  <li>Driver profile data if the account is a UniRide driver account.</li>
-                  <li>Operational account data that is no longer required after deletion.</li>
+                  <li>
+                    Linked devices, notification preferences, and support
+                    access.
+                  </li>
+                  <li>
+                    Driver profile data if the account is a UniRide driver
+                    account.
+                  </li>
+                  <li>
+                    Operational account data that is no longer required after
+                    deletion.
+                  </li>
                 </ul>
               </Section>
 
@@ -271,15 +292,16 @@ function AccountDeletionContent() {
                 <ul className="space-y-2 pl-5 list-disc">
                   <li>
                     Limited legal, financial, fraud-prevention, and safety audit
-                    records that UniRide must keep to meet compliance obligations.
+                    records that UniRide must keep to meet compliance
+                    obligations.
                   </li>
                   <li>
                     These retained records may be stored for up to 7 years where
                     required by law or legitimate safety and financial needs.
                   </li>
                   <li>
-                    Retained records are kept only for those compliance purposes,
-                    not to keep your account active.
+                    Retained records are kept only for those compliance
+                    purposes, not to keep your account active.
                   </li>
                 </ul>
               </Section>
@@ -302,7 +324,8 @@ function AccountDeletionContent() {
               <Section title="Need help?">
                 <div className="space-y-1">
                   <p>privacy@uniride.ng</p>
-                  <p>support@uniride.ng</p>
+                  <p>{supportEmail}</p>
+                  <p>{supportPhone}</p>
                 </div>
               </Section>
             </div>
@@ -344,7 +367,9 @@ function AccountDeletionContent() {
                     <Input
                       type="email"
                       value={form.email}
-                      onChange={(event) => updateField("email", event.target.value)}
+                      onChange={(event) =>
+                        updateField("email", event.target.value)
+                      }
                       placeholder="name@example.com"
                     />
                   </div>
@@ -364,7 +389,9 @@ function AccountDeletionContent() {
                     </label>
                     <Input
                       value={form.code}
-                      onChange={(event) => updateField("code", event.target.value)}
+                      onChange={(event) =>
+                        updateField("code", event.target.value)
+                      }
                       placeholder="Enter the 6-digit code"
                       maxLength={6}
                     />
@@ -374,7 +401,9 @@ function AccountDeletionContent() {
                     type="button"
                     variant="outline"
                     onClick={verifyCode}
-                    disabled={!form.email.trim() || !form.code.trim() || verifyingCode}
+                    disabled={
+                      !form.email.trim() || !form.code.trim() || verifyingCode
+                    }
                     className="w-full"
                   >
                     {verifyingCode ? "Verifying..." : "Verify code"}
@@ -387,7 +416,9 @@ function AccountDeletionContent() {
                       </label>
                       <Textarea
                         value={form.reason}
-                        onChange={(event) => updateField("reason", event.target.value)}
+                        onChange={(event) =>
+                          updateField("reason", event.target.value)
+                        }
                         placeholder="Optional, but helpful for UniRide support."
                         rows={4}
                       />
@@ -426,7 +457,9 @@ function AccountDeletionContent() {
                   <div className="space-y-3 border border-slate-200 bg-white p-4 text-sm text-slate-700">
                     <div className="flex items-center gap-2 text-slate-900">
                       <Shield className="h-4 w-4" />
-                      <span className="font-medium">Current request status</span>
+                      <span className="font-medium">
+                        Current request status
+                      </span>
                     </div>
                     <div className="grid gap-2">
                       <div className="flex items-center justify-between">
@@ -442,7 +475,9 @@ function AccountDeletionContent() {
                       {result.scheduled_for ? (
                         <div className="flex items-center justify-between">
                           <span>Scheduled deletion</span>
-                          <span>{new Date(result.scheduled_for).toLocaleString()}</span>
+                          <span>
+                            {new Date(result.scheduled_for).toLocaleString()}
+                          </span>
                         </div>
                       ) : null}
                     </div>
@@ -461,7 +496,8 @@ function AccountDeletionContent() {
                     </li>
                     <li className="flex gap-2">
                       <Trash2 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-                      UniRide deletes the account after approval plus a 30-day wait.
+                      UniRide deletes the account after approval plus a 30-day
+                      wait.
                     </li>
                   </ul>
                 </div>

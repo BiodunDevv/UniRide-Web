@@ -97,7 +97,7 @@ export function DriverDetailDrawer({
           variant="link"
           className="text-foreground w-fit px-0 text-left h-auto p-0 text-xs font-medium hover:underline"
         >
-          {driver.user_id?.name ?? "Unknown"}
+          {driver.user_id?.name ?? "Driver profile pending"}
         </Button>
       </DrawerTrigger>
       <DrawerContent>
@@ -117,7 +117,7 @@ export function DriverDetailDrawer({
             />
             <div>
               <p className="text-sm font-medium">
-                {driver.user_id?.name ?? "Unknown"}
+                {driver.user_id?.name ?? "Driver profile pending"}
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <div className="flex items-center gap-0.5">

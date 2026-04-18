@@ -13,9 +13,11 @@ import {
   Car,
   AlertCircle,
 } from "lucide-react";
+import { useSupportContact } from "@/hooks/use-support-contact";
 
 export default function TermsOfServicePage() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { supportEmail, supportPhone } = useSupportContact();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -93,7 +95,7 @@ export default function TermsOfServicePage() {
               variant="outline"
               className="border-white/20 text-white/70 text-xs"
             >
-              Last Updated: November 27, 2025
+              Last Updated: April 18, 2026
             </Badge>
           </div>
 
@@ -167,6 +169,25 @@ export default function TermsOfServicePage() {
                   transportation services. All rides are provided by independent
                   drivers.
                 </p>
+                <p className="font-semibold text-foreground mt-2">
+                  Operational ride flow summary:
+                </p>
+                <ul className="list-disc ml-5 space-y-1.5">
+                  <li>
+                    Ride sessions progress through scheduled or available,
+                    accepted, in-progress, then completed or cancelled states.
+                  </li>
+                  <li>
+                    Ride timers are generated from secure server timestamps so
+                    elapsed time stays accurate when users leave and return to
+                    live pages.
+                  </li>
+                  <li>
+                    Drivers who stop sending location updates for 5 minutes may
+                    be set offline automatically unless they are currently on an
+                    active accepted or in-progress ride.
+                  </li>
+                </ul>
               </SectionBody>
             </section>
 
@@ -264,6 +285,10 @@ export default function TermsOfServicePage() {
                   </li>
                   <li>
                     Keep your driver profile information accurate and up-to-date
+                  </li>
+                  <li>
+                    Keep live location updates active while online so riders can
+                    track ride progress and safety context
                   </li>
                   <li>
                     Not operate the Platform while under the influence of
@@ -500,6 +525,10 @@ export default function TermsOfServicePage() {
                   <li>Share or misuse passenger personal information</li>
                   <li>
                     Accept cash payments or negotiate fares outside the Platform
+                  </li>
+                  <li>
+                    Cancel accepted or in-progress rides without valid safety,
+                    emergency, or policy reasons
                   </li>
                   <li>Smoke or vape in the vehicle while on duty</li>
                   <li>Allow unauthorized passengers or pets in the vehicle</li>
@@ -757,10 +786,10 @@ export default function TermsOfServicePage() {
                     <strong>Email:</strong> legal@uniride.ng
                   </p>
                   <p>
-                    <strong>Support:</strong> support@uniride.ng
+                    <strong>Support:</strong> {supportEmail}
                   </p>
                   <p>
-                    <strong>Phone:</strong> +234 800 UNIRIDE
+                    <strong>Phone:</strong> {supportPhone}
                   </p>
                   <p>
                     <strong>Address:</strong> UniRide Nigeria, Lagos, Nigeria

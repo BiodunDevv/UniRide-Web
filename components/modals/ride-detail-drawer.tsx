@@ -83,6 +83,11 @@ function formatDate(d: string) {
   });
 }
 
+function formatDateSafe(value?: string) {
+  if (!value) return "";
+  return formatDate(value);
+}
+
 interface RideDetailDrawerProps {
   ride: AdminRide;
   trigger?: React.ReactNode;
@@ -98,10 +103,18 @@ export function RideDetailDrawer({
 
   // Extract populated data
   const driver = ride.driver_id;
+  const hasAssignedDriver = Boolean(
+    (typeof driver === "object" && driver) ||
+    (typeof driver === "string" && driver.trim().length > 0),
+  );
+  const requesterName =
+    typeof ride.created_by === "object" ? ride.created_by?.name : "Passenger";
   const driverName =
     typeof driver === "object"
-      ? (driver?.user_id?.name ?? "Unknown")
-      : "Unknown";
+      ? (driver?.user_id?.name ?? "Assigned Driver")
+      : hasAssignedDriver
+        ? "Assigned Driver"
+        : "Awaiting Driver Assignment";
   const driverPhone = typeof driver === "object" ? driver?.phone : undefined;
   const driverVehicle =
     typeof driver === "object" ? driver?.vehicle_model : undefined;
@@ -111,7 +124,11 @@ export function RideDetailDrawer({
     typeof driver === "object" ? driver?.vehicle_color : undefined;
   const driverRating = typeof driver === "object" ? driver?.rating : undefined;
   const driverAvatar =
-    typeof driver === "object" ? driver?.vehicle_image : undefined;
+    typeof driver === "object"
+      ? driver?.user_id?.profile_picture || driver?.vehicle_image
+      : typeof ride.created_by === "object"
+        ? ride.created_by?.profile_picture
+        : undefined;
   const driverOnline = typeof driver === "object" ? driver?.is_online : false;
 
   const pickupLoc = ride.pickup_location_id;
@@ -127,6 +144,93 @@ export function RideDetailDrawer({
     typeof destLoc === "object" ? destLoc?.short_name || destLoc?.name : "—";
   const destAddress =
     typeof destLoc === "object" ? destLoc?.address : undefined;
+
+  const participants = ride.participants || [];
+  const activeParticipants = participants.filter((participant) =>
+    ["pending", "accepted", "in_progress"].includes(participant.status || ""),
+  );
+  const checkedInCount =
+    ride.checked_in_count ??
+    activeParticipants.filter(
+      (participant) => participant.check_in_status === "checked_in",
+    ).length;
+  const timelineItems: Array<{
+    id: string;
+    label: string;
+    detail?: string;
+    time?: string;
+    tone?: "default" | "success" | "danger";
+  }> = [
+    {
+      id: "created",
+      label: "Ride created",
+      detail: `${pickupName} → ${destName}`,
+      time: ride.createdAt,
+      tone: "success",
+    },
+  ];
+
+  if (participants.length > 0) {
+    const firstJoin = participants.find(
+      (participant) => participant.booking_time || participant.createdAt,
+    );
+    timelineItems.push({
+      id: "passengers-joined",
+      label: "Passengers joined",
+      detail: `${participants.length} booking${participants.length === 1 ? "" : "s"} added to this session`,
+      time: firstJoin?.booking_time || firstJoin?.createdAt,
+      tone: "success",
+    });
+  }
+
+  if (hasAssignedDriver) {
+    timelineItems.push({
+      id: "driver-assigned",
+      label: "Driver assignment",
+      detail: driverName,
+      time: ride.updatedAt,
+      tone: "success",
+    });
+  }
+
+  if (activeParticipants.length > 0) {
+    timelineItems.push({
+      id: "check-in",
+      label: "Check-in progress",
+      detail: `${checkedInCount}/${activeParticipants.length} active passengers checked in`,
+      time: ride.updatedAt,
+    });
+  }
+
+  if (["in_progress", "completed"].includes(ride.status)) {
+    timelineItems.push({
+      id: "started",
+      label: "Ride started",
+      detail: "Trip moved into in-progress state",
+      time: ride.updatedAt,
+      tone: "success",
+    });
+  }
+
+  if (ride.status === "completed") {
+    timelineItems.push({
+      id: "completed",
+      label: "Ride completed",
+      detail: "Session ended successfully",
+      time: ride.ended_at || ride.updatedAt,
+      tone: "success",
+    });
+  }
+
+  if (ride.status === "cancelled") {
+    timelineItems.push({
+      id: "cancelled",
+      label: "Ride cancelled",
+      detail: ride.cancel_reason || "Cancellation reason not provided",
+      time: ride.cancelled_at || ride.updatedAt,
+      tone: "danger",
+    });
+  }
 
   const status = statusStyles[ride.status] || {
     variant: "secondary" as const,
@@ -201,6 +305,12 @@ export function RideDetailDrawer({
               </div>
             </div>
           </div>
+          {!hasAssignedDriver && (
+            <p className="text-[11px] text-muted-foreground">
+              Requested by {requesterName}. Driver will appear here once the
+              ride is accepted.
+            </p>
+          )}
 
           <Separator />
 
@@ -250,6 +360,117 @@ export function RideDetailDrawer({
                 {ride.booked_seats || 0}/{ride.available_seats}
               </p>
               <p className="text-[10px] text-muted-foreground">Seats Booked</p>
+            </div>
+          </div>
+
+          {/* Joined Passengers */}
+          <div className="rounded-lg border p-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-slate-900">
+                Joined Passengers
+              </p>
+              <Badge variant="secondary" className="text-[10px]">
+                {participants.length}
+              </Badge>
+            </div>
+
+            {participants.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">
+                No passengers have joined this ride yet.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {participants.slice(0, 8).map((participant) => {
+                  const passengerName =
+                    participant.passenger_name ||
+                    participant.name ||
+                    "Passenger";
+                  const badgeText =
+                    participant.status === "in_progress"
+                      ? "In progress"
+                      : participant.status || "Pending";
+
+                  return (
+                    <div
+                      key={
+                        participant.booking_id ||
+                        `${passengerName}-${participant.createdAt}`
+                      }
+                      className="flex items-center justify-between rounded-md border bg-slate-50 px-2.5 py-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <ProfileAvatar
+                          src={participant.profile_picture || undefined}
+                          name={passengerName}
+                          size="sm"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-slate-900 truncate">
+                            {passengerName}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {participant.seats_requested || 1} seat
+                            {(participant.seats_requested || 1) > 1 ? "s" : ""}
+                            {participant.check_in_status === "checked_in"
+                              ? " · Checked in"
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] capitalize"
+                      >
+                        {badgeText.replace("_", " ")}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Session Timeline */}
+          <div className="rounded-lg border p-3">
+            <p className="text-xs font-semibold text-slate-900 mb-2">
+              Session Timeline
+            </p>
+            <div className="space-y-3">
+              {timelineItems.map((item, index) => (
+                <div key={item.id} className="flex gap-2.5">
+                  <div className="flex flex-col items-center pt-1">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        item.tone === "danger"
+                          ? "bg-red-500"
+                          : item.tone === "success"
+                            ? "bg-emerald-500"
+                            : "bg-slate-400"
+                      }`}
+                    />
+                    {index < timelineItems.length - 1 && (
+                      <span className="mt-1 h-full min-h-4 w-px bg-border" />
+                    )}
+                  </div>
+                  <div className="flex-1 pb-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-medium text-slate-900">
+                        {item.label}
+                      </p>
+                      {item.time ? (
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDateSafe(item.time)}
+                        </span>
+                      ) : null}
+                    </div>
+                    {item.detail ? (
+                      <p className="mt-0.5 text-[10px] text-muted-foreground">
+                        {item.detail}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

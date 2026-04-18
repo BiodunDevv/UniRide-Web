@@ -11,7 +11,11 @@ import {
   useMap,
   Marker,
 } from "react-leaflet";
-import { divIcon, type LatLngBoundsExpression, type LatLngTuple } from "leaflet";
+import {
+  divIcon,
+  type LatLngBoundsExpression,
+  type LatLngTuple,
+} from "leaflet";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -146,9 +150,7 @@ export default function LiveMapPage() {
   const [view, setView] = useState<EntityView>("all");
   const [showOfflineDrivers, setShowOfflineDrivers] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
-  const [mapStyle, setMapStyle] = useState<"satellite" | "street">(
-    "satellite",
-  );
+  const [mapStyle, setMapStyle] = useState<"satellite" | "street">("satellite");
   const [fitSignal, setFitSignal] = useState(0);
   const [hasInitializedViewport, setHasInitializedViewport] = useState(false);
 
@@ -246,8 +248,7 @@ export default function LiveMapPage() {
                 ...driver,
                 heading: data.heading ?? driver.heading,
                 is_online: true,
-                last_online_at:
-                  data.timestamp || new Date().toISOString(),
+                last_online_at: data.timestamp || new Date().toISOString(),
                 location: { latitude, longitude },
               }
             : driver,
@@ -268,8 +269,7 @@ export default function LiveMapPage() {
                       longitude: data.last_known_location.coordinates[0],
                     }
                   : driver.location,
-                last_online_at:
-                  data.timestamp || driver.last_online_at,
+                last_online_at: data.timestamp || driver.last_online_at,
               }
             : driver,
         ),
@@ -285,7 +285,9 @@ export default function LiveMapPage() {
       }
 
       setRiders((current) => {
-        const existing = current.find((rider) => rider.user_id === data.user_id);
+        const existing = current.find(
+          (rider) => rider.user_id === data.user_id,
+        );
 
         if (!existing) {
           fetchLiveData();
@@ -448,7 +450,7 @@ export default function LiveMapPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col gap-6 p-4 md:p-6">
-      <Card className="border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100">
+      <Card className="border-slate-200 bg-linear-to-br from-white via-slate-50 to-slate-100">
         <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -483,8 +485,8 @@ export default function LiveMapPage() {
               </CardTitle>
               <CardDescription className="max-w-2xl text-sm text-slate-600">
                 Monitor approved drivers and only riders in accepted or
-                in-progress trips. The map stays synced through REST preload plus
-                live socket updates.
+                in-progress trips. The map stays synced through REST preload
+                plus live socket updates.
               </CardDescription>
             </div>
           </div>
@@ -509,7 +511,9 @@ export default function LiveMapPage() {
               size="sm"
               onClick={() => setShowOfflineDrivers((current) => !current)}
             >
-              {showOfflineDrivers ? "Hide offline drivers" : "Show offline drivers"}
+              {showOfflineDrivers
+                ? "Hide offline drivers"
+                : "Show offline drivers"}
             </Button>
             <Button
               variant={mapStyle === "satellite" ? "default" : "outline"}
@@ -585,7 +589,7 @@ export default function LiveMapPage() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_380px]">
         <Card className="overflow-hidden border-slate-200">
           <CardContent className="relative p-0">
-            <div className="h-[70vh] min-h-[560px] bg-slate-100">
+            <div className="h-[70vh] min-h-140 bg-slate-100">
               {loading ? (
                 <div className="flex h-full items-center justify-center text-sm text-slate-500">
                   Loading live map data...
@@ -613,7 +617,7 @@ export default function LiveMapPage() {
                   <TileLayer
                     attribution={
                       mapStyle === "satellite"
-                        ? 'Tiles &copy; Esri'
+                        ? "Tiles &copy; Esri"
                         : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     }
                     url={
@@ -696,7 +700,7 @@ export default function LiveMapPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="h-[320px]">
+              <ScrollArea className="h-80">
                 <div className="space-y-2 p-4">
                   {listItems.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
@@ -763,8 +767,8 @@ export default function LiveMapPage() {
                                 ? (item.data as DriverMarker).is_online
                                   ? "Live"
                                   : "Last seen"
-                                : (item.data as ActiveRiderMarker).ride_status ||
-                                  "Active"}
+                                : (item.data as ActiveRiderMarker)
+                                    .ride_status || "Active"}
                             </Badge>
                           </div>
                         </button>
@@ -825,7 +829,7 @@ export default function LiveMapPage() {
                     <div className="rounded-2xl bg-slate-50 px-4 py-3">
                       <p className="text-xs text-slate-500">Vehicle color</p>
                       <p className="mt-1 text-lg font-semibold text-slate-950">
-                        {selected.data.vehicle_color || "Unknown"}
+                        {selected.data.vehicle_color || "Not set"}
                       </p>
                     </div>
                   </div>
@@ -890,7 +894,7 @@ export default function LiveMapPage() {
                     <div className="rounded-2xl bg-slate-50 px-4 py-3">
                       <p className="text-xs text-slate-500">Booking status</p>
                       <p className="mt-1 text-lg font-semibold text-slate-950">
-                        {selected.data.booking_status || "Unknown"}
+                        {selected.data.booking_status || "Status unavailable"}
                       </p>
                     </div>
                     <div className="rounded-2xl bg-slate-50 px-4 py-3">

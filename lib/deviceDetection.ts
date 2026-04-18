@@ -11,7 +11,7 @@ export function getDeviceInfo(userAgent?: string): DeviceInfo {
   const ua =
     userAgent || (typeof navigator !== "undefined" ? navigator.userAgent : "");
 
-  let os = "Unknown OS";
+  let os = "Unidentified OS";
   if (/Windows NT 10/i.test(ua)) {
     os = "Windows 10";
   } else if (/Windows NT 11/i.test(ua)) {
@@ -38,7 +38,7 @@ export function getDeviceInfo(userAgent?: string): DeviceInfo {
     os = "Chrome OS";
   }
 
-  let browser = "Unknown Browser";
+  let browser = "Unidentified Browser";
   if (/Edg\//i.test(ua)) {
     browser = "Edge";
   } else if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) {
@@ -98,7 +98,7 @@ export function getDeviceInfo(userAgent?: string): DeviceInfo {
       deviceName = "Desktop";
     }
   } else {
-    deviceName = "Unknown Device";
+    deviceName = "Unidentified Device";
   }
 
   const name = `${deviceName} • ${browser}`;

@@ -96,8 +96,8 @@ const statusStyles: Record<
 
 function getPassengerName(booking: AdminBooking): string {
   const u = booking.user_id;
-  if (typeof u === "object" && u) return u.name ?? "Unknown";
-  return "Unknown";
+  if (typeof u === "object" && u) return u.name ?? "Passenger";
+  return "Passenger";
 }
 
 function getLocationShort(loc: any): string {
@@ -227,6 +227,30 @@ export function BookingsTable({
                   {getLocationShort(ride.destination_id)}
                 </span>
               </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: "ride_passengers",
+        header: "Joined",
+        accessorFn: (row) => row.ride_passengers?.length ?? 0,
+        cell: ({ row }) => {
+          const passengers = row.original.ride_passengers || [];
+          const names = passengers
+            .slice(0, 2)
+            .map((passenger) => passenger.name || passenger.passenger_name)
+            .filter(Boolean)
+            .join(", ");
+
+          return (
+            <div className="min-w-32">
+              <p className="text-xs font-semibold text-slate-900">
+                {passengers.length} joined
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {names || "No passengers yet"}
+              </p>
             </div>
           );
         },

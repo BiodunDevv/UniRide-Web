@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { useSupportContact } from "@/hooks/use-support-contact";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type View = "home" | "submit" | "track" | "success" | "faq";
@@ -216,6 +217,8 @@ function PageHeader() {
 
 // ─── Shared Footer ────────────────────────────────────────────────────────────
 function PageFooter() {
+  const { supportMailto } = useSupportContact();
+
   return (
     <footer className="mt-auto pt-8 pb-6 px-4">
       <div className="max-w-2xl mx-auto">
@@ -234,7 +237,7 @@ function PageFooter() {
             </Link>
             <span className="text-white/20">·</span>
             <a
-              href="mailto:support@uniride.ng"
+              href={supportMailto}
               className="hover:text-white/70 transition-colors flex items-center gap-1"
             >
               Support
@@ -306,6 +309,8 @@ export default function SupportPage() {
   const [trackEmail, setTrackEmail] = useState("");
   const [trackNumber, setTrackNumber] = useState("");
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
+  const { supportEmail, supportPhone, supportMailto, supportTel } =
+    useSupportContact();
 
   // Cleanup on unmount
   useEffect(() => {
@@ -1116,6 +1121,9 @@ export default function SupportPage() {
             <p className="text-xs text-white/50 mb-4">
               Our support team typically responds within 24 hours.
             </p>
+            <p className="text-[11px] text-white/60 mb-4">
+              {supportEmail} · {supportPhone}
+            </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Button
                 size="sm"
@@ -1130,11 +1138,20 @@ export default function SupportPage() {
                 className="border-white/2 hover:bg-white/10"
                 asChild
               >
-                <a href="mailto:support@uniride.ng">
+                <a href={supportMailto}>
                   <Mail className="w-3.5 h-3.5 mr-1.5" />
                   Email Us
                 </a>
               </Button>
+              {supportTel ? (
+                <Button
+                  size="sm"
+                  className="border-white/2 hover:bg-white/10"
+                  asChild
+                >
+                  <a href={supportTel}>Call Support</a>
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>
