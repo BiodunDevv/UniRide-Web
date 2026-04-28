@@ -1,0 +1,237 @@
+"use client";
+
+import { Moon, SunDim } from "lucide-react";
+import {
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
+import { useTheme } from "next-themes";
+import { flushSync } from "react-dom";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+type Props = {
+  className?: string;
+  variant?: "icon-only" | "with-text" | "header" | "mobile" | "landing";
+  enableShortcut?: boolean;
+  shortcutLabel?: string;
+};
+
+export const AnimatedThemeToggler = ({
+  className,
+  variant = "icon-only",
+  enableShortcut = false,
+  shortcutLabel,
+}: Props) => {
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
+  const isDarkMode = (resolvedTheme ?? theme) === "dark";
+
+  const computedShortcutLabel = useMemo(() => {
+    if (shortcutLabel) return shortcutLabel;
+    if (typeof navigator === "undefined") return "Ctrl+D";
+    const isMac = /Mac|iPhone|iPad|iPod/i.test(
+      navigator.userAgent || navigator.platform,
+    );
+    return isMac ? "⌘D" : "Ctrl+D";
+  }, [shortcutLabel]);
+
+  const changeTheme = useCallback(async () => {
+    if (!buttonRef.current) return;
+    const newTheme = isDarkMode ? "light" : "dark";
+
+    if (
+      typeof window === "undefined" ||
+      typeof document === "undefined" ||
+      !document.startViewTransition
+    ) {
+      setTheme(newTheme);
+      return;
+    }
+
+    await document.startViewTransition(() => {
+      flushSync(() => {
+        setTheme(newTheme);
+      });
+    }).ready;
+
+    const { top, left, width, height } =
+      buttonRef.current.getBoundingClientRect();
+    const y = top + height / 2;
+    const x = left + width / 2;
+    const right = window.innerWidth - left;
+    const bottom = window.innerHeight - top;
+    const maxRad = Math.hypot(Math.max(left, right), Math.max(top, bottom));
+
+    document.documentElement.animate(
+      {
+        clipPath: [
+          `circle(0px at ${x}px ${y}px)`,
+          `circle(${maxRad}px at ${x}px ${y}px)`,
+        ],
+      },
+      {
+        duration: 700,
+        easing: "ease-in-out",
+        pseudoElement: "::view-transition-new(root)",
+      },
+    );
+  }, [isDarkMode, setTheme]);
+
+  useEffect(() => {
+    if (!mounted || !enableShortcut) return;
+
+    const handleShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName;
+      const isEditable =
+        tagName === "INPUT" ||
+        tagName === "TEXTAREA" ||
+        target?.isContentEditable;
+      if (isEditable) return;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        void changeTheme();
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [changeTheme, enableShortcut, mounted]);
+
+  if (!mounted) return null;
+
+  // Landing header variant — pill with icon + subtle label, works on dark bg
+  if (variant === "landing") {
+    return (
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => void changeTheme()}
+        aria-label="Toggle theme"
+        className={cn(
+          "flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-primary-foreground/80 transition-all duration-200 hover:bg-primary-foreground/20 hover:text-primary-foreground active:scale-95",
+          className,
+        )}
+      >
+        <span className="relative inline-flex size-3.5 shrink-0 items-center justify-center">
+          <SunDim className="h-3.5 w-3.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </span>
+        <span className="text-[11px] font-medium leading-none">
+          {isDarkMode ? "Dark" : "Light"}
+        </span>
+      </button>
+    );
+  }
+
+  if (variant === "header") {
+    return (
+      <Button
+        ref={buttonRef}
+        type="button"
+        onClick={() => void changeTheme()}
+        variant="outline"
+        size="sm"
+        className={cn("h-9 gap-2", className)}
+        aria-label={`Toggle theme (${computedShortcutLabel})`}
+        title={`Toggle theme (${computedShortcutLabel})`}
+      >
+        <span className="relative inline-flex size-4 items-center justify-center">
+          <SunDim className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </span>
+        <span className="hidden text-sm sm:inline">
+          {isDarkMode ? "Dark" : "Light"}
+        </span>
+        <Badge
+          variant="outline"
+          className="hidden rounded-md px-1.5 py-0 text-[10px] md:inline-flex"
+        >
+          {computedShortcutLabel}
+        </Badge>
+      </Button>
+    );
+  }
+
+  if (variant === "with-text") {
+    return (
+      <Button
+        ref={buttonRef}
+        type="button"
+        onClick={() => void changeTheme()}
+        variant="ghost"
+        className={cn("w-full justify-start", className)}
+        aria-label="Toggle theme"
+      >
+        <span className="relative inline-flex h-4 w-4 shrink-0 items-center justify-center">
+          <SunDim className="h-3.5 w-3.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </span>
+        <span>{isDarkMode ? "Dark mode" : "Light mode"}</span>
+      </Button>
+    );
+  }
+
+  if (variant === "mobile") {
+    return (
+      <Button
+        ref={buttonRef}
+        type="button"
+        onClick={() => void changeTheme()}
+        variant="ghost"
+        className={cn(
+          "h-12 w-full justify-between rounded-2xl border border-input/80 bg-background px-3 text-left hover:bg-muted/30",
+          className,
+        )}
+        aria-label="Toggle theme"
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+            <SunDim className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-foreground">
+              Appearance
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Tap to switch theme
+            </span>
+          </span>
+        </span>
+        <Badge
+          variant="secondary"
+          className="rounded-lg px-2.5 py-1 text-[11px]"
+        >
+          {isDarkMode ? "Dark" : "Light"}
+        </Badge>
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      ref={buttonRef}
+      type="button"
+      onClick={() => void changeTheme()}
+      variant="outline"
+      size="icon"
+      className={cn("relative", className)}
+      aria-label="Toggle theme"
+    >
+      <SunDim className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  );
+};

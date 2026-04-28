@@ -7,6 +7,7 @@ import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/store/useAuthStore";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -82,6 +83,7 @@ export default function Header() {
             <Button variant="secondary" size="sm" asChild>
               <Link href="/driver-apply">Become a Driver</Link>
             </Button>
+            <AnimatedThemeToggler variant="landing" className="hidden md:flex" />
 
             {/* Mobile Menu Button */}
             <button
@@ -159,6 +161,7 @@ export default function Header() {
 
           {/* Action Buttons */}
           <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2.5 border-t border-primary-foreground/10 bg-primary/95">
+            <AnimatedThemeToggler variant="mobile" className="border-primary-foreground/20 bg-primary-foreground/5 hover:bg-primary-foreground/10 text-primary-foreground [&_span]:text-primary-foreground [&_.text-foreground]:text-primary-foreground [&_.text-muted-foreground]:text-primary-foreground/60" />
             <Button
               variant="outline"
               size="sm"

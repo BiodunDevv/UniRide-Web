@@ -32,6 +32,7 @@ import {
 import { useAuthStore } from "@/store/useAuthStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { formatDistanceToNow } from "date-fns";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -144,6 +145,13 @@ export function SiteHeader() {
 
         {/* Right — notifications + user */}
         <div className="ml-auto flex items-center gap-1">
+          {/* ── Theme Toggler ─────────────────────────────────────────────── */}
+          <AnimatedThemeToggler
+            variant="icon-only"
+            className="h-8 w-8 rounded-full"
+            enableShortcut
+          />
+
           {/* ── Notification Bell ────────────────────────────────────────── */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
