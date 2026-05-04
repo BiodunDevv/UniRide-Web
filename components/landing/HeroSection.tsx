@@ -2,10 +2,44 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Smartphone } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+
+const appDownloadUrl =
+  "https://play.google.com/store/apps/details?id=com.biodun42.uniride";
+
+function GooglePlayIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+    >
+      <path
+        fill="currentColor"
+        d="M4.21 2.16c-.33.18-.54.54-.54 1.03v17.62c0 .49.21.85.54 1.03l9.86-9.84L4.21 2.16Z"
+      />
+      <path
+        fill="currentColor"
+        opacity=".82"
+        d="m17.19 8.88-3.12 3.12 3.12 3.12 3.75-2.14c1.08-.62 1.08-1.34 0-1.96l-3.75-2.14Z"
+      />
+      <path
+        fill="currentColor"
+        opacity=".64"
+        d="m4.21 2.16 9.86 9.84 3.12-3.12L5.84 2.39c-.62-.35-1.2-.43-1.63-.23Z"
+      />
+      <path
+        fill="currentColor"
+        opacity=".64"
+        d="M4.21 21.84c.43.2 1.01.12 1.63-.23l11.35-6.49L14.07 12l-9.86 9.84Z"
+      />
+    </svg>
+  );
+}
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -95,9 +129,13 @@ export default function HeroSection() {
                 className="hover:scale-[1.02] transition-transform text-sm"
                 asChild
               >
-                <Link href="#">
-                  <Smartphone className="mr-2 h-4 w-4" />
-                  Explore UniRide App
+                <Link
+                  href={appDownloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <GooglePlayIcon className="mr-2 h-4 w-4" />
+                  Get UniRide on Google Play
                 </Link>
               </Button>
               <Button size="sm" variant="outline" asChild>
